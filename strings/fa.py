@@ -1,416 +1,434 @@
-# فایل رشته‌ها / بومی‌سازی برای greed
-# قابل ویرایش است، اما فیلدهای جایگزین (کلماتی که در {آکولاد} هستند) را حذف نکنید
+# Strings / localization file for greed
+# Can be edited, but DON'T REMOVE THE REPLACEMENT FIELDS (words surrounded by {curly braces})
 
-# نماد ارز
+# Currency symbol
 currency_symbol = "€"
 
-# قالب‌گذاری نماد ارز
+# Positioning of the currency symbol
 currency_format_string = "{symbol} {value}"
 
-# تعداد محصول موجود در انبار
-in_stock_format_string = "{quantity} موجود است"
+# Quantity of a product in stock
+in_stock_format_string = "{quantity} available"
 
-# تعداد محصول در سبد خرید
-in_cart_format_string = "{quantity} در سبد خرید"
+# Copies of a product in cart
+in_cart_format_string = "{quantity} in cart"
 
-# اطلاعات محصول
+# Product information
 product_format_string = "<b>{name}</b>\n" \
                         "{description}\n" \
                         "{price}\n" \
                         "<b>{cart}</b>"
 
-# شماره سفارش، نمایش داده شده در اطلاعات سفارش
-order_number = "سفارش #{id}"
+# Order number, displayed in the order info
+order_number = "Order #{id}"
 
-# اطلاعات سفارش، نمایش داده شده به مدیران
-order_format_string = "توسط {user}\n" \
-                      "ایجاد شده در {date}\n" \
+# Order info string, shown to the admins
+order_format_string = "by {user}\n" \
+                      "Created on {date}\n" \
                       "\n" \
                       "{items}\n" \
-                      "جمع کل: <b>{value}</b>\n" \
+                      "TOTAL: <b>{value}</b>\n" \
                       "\n" \
-                      "یادداشت‌های مشتری: {notes}\n"
+                      "Customer notes: {notes}\n"
 
-# اطلاعات سفارش، نمایش داده شده به کاربر
-user_order_format_string = "{status_emoji} <b>سفارش {status_text}</b>\n" \
+# Order info string, shown to the user
+user_order_format_string = "{status_emoji} <b>Order {status_text}</b>\n" \
                            "{items}\n" \
-                           "جمع کل: <b>{value}</b>\n" \
+                           "TOTAL: <b>{value}</b>\n" \
                            "\n" \
-                           "یادداشت‌ها: {notes}\n"
+                           "Notes: {notes}\n"
 
-# صفحه تراکنش‌ها در حال بارگذاری است
-loading_transactions = "<i>در حال بارگذاری تراکنش‌ها...\n" \
-                       "لطفاً چند ثانیه صبر کنید.</i>"
+# Transaction page is loading
+loading_transactions = "<i>Loading transactions...\n" \
+                       "Please wait a few seconds.</i>"
 
-# صفحه تراکنش‌ها
-transactions_page = "صفحه <b>{page}</b>:\n" \
+# Transactions page
+transactions_page = "Page <b>{page}</b>:\n" \
                     "\n" \
                     "{transactions}"
 
-# زیرنویس transactions.csv
-csv_caption = "📄 یک فایل .csv شامل تمام تراکنش‌های ذخیره شده در پایگاه داده ربات تولید شد.\n" \
-              "می‌توانید این فایل را با برنامه‌های دیگر مانند LibreOffice Calc باز کنید تا داده‌ها را پردازش کنید."
+# transactions.csv caption
+csv_caption = "A 📄 .csv file containing all transactions stored in the bot database was generated.\n" \
+              "You can open this file with other programs, such as LibreOffice Calc, to process" \
+              " the data."
 
-# گفتگو: فرمان شروع ارسال شد و ربات باید به کاربر خوش‌آمد بگوید
-conversation_after_start = "سلام!\n" \
-                           "به greed خوش‌آمدید!\n" \
-                           "این نسخه 🅱️ <b>بتا</b> نرم‌افزار است.\n" \
-                           "کاملاً قابل استفاده است، اما ممکن است برخی از باگ‌ها هنوز وجود داشته باشند.\n" \
-                           "اگر موردی پیدا کردید، لطفاً آن را در https://github.com/Steffo99/greed/issues گزارش دهید."
+# Conversation: the start command was sent and the bot should welcome the user
+conversation_after_start = "Hello!\n" \
+                           "Welcome to greed!\n" \
+                           "This is the 🅱️ <b>Beta</b> version of the software.\n" \
+                           "It is fully usable, but there may be some bugs are still present.\n" \
+                           "If you find any, please report them at https://github.com/Steffo99/greed/issues."
 
-# گفتگو: برای ارسال یک صفحه کلید داخلی باید یک پیام همراه آن ارسال کنید
-conversation_open_user_menu = "چه کاری می‌خواهید انجام دهید؟\n" \
-                              "💰 شما <b>{credit}</b> در کیف پول خود دارید.\n" \
+# Conversation: to send an inline keyboard you need to send a message with it
+conversation_open_user_menu = "What would you like to do?\n" \
+                              "💰 You have <b>{credit}</b> in your wallet.\n" \
                               "\n" \
-                              "<i>برای انتخاب عملیات، دکمه‌ای در صفحه کلید پایین فشار دهید.\n" \
-                              "اگر صفحه کلید باز نشده است، می‌توانید آن را با فشردن دکمه با چهار مربع کوچک در نوار پیام باز کنید.</i>"
+                              "<i>Press a key on the bottom keyboard to select an operation.\n" \
+                              "If the keyboard has not opened, you can open it by pressing the button with four small" \
+                              " squares in the message bar.</i>"
 
-# گفتگو: مانند بالا، اما برای مدیران
-conversation_open_admin_menu = "شما یک 💼 <b>مدیر</b> این فروشگاه هستید!\n" \
-                               "چه کاری می‌خواهید انجام دهید؟\n" \
+# Conversation: like above, but for administrators
+conversation_open_admin_menu = "You are a 💼 <b>Manager</b> of this store!\n" \
+                               "What would you like to do?\n" \
                                "\n" \
-                               "<i>برای انتخاب عملیات، دکمه‌ای در صفحه کلید پایین فشار دهید.\n" \
-                               "اگر صفحه کلید باز نشده است، می‌توانید آن را با فشردن دکمه با چهار مربع کوچک در نوار پیام باز کنید.</i>"
+                               "<i>Press a key on the bottom keyboard to select an operation.\n" \
+                               "If the keyboard has not opened, you can open it by pressing the button with four small" \
+                               " squares in the message bar.</i>"
 
-# گفتگو: انتخاب روش پرداخت
-conversation_payment_method = "چگونه می‌خواهید به کیف پول خود وجه اضافه کنید؟"
+# Conversation: select a payment method
+conversation_payment_method = "How do you want to add funds to your wallet?"
 
-# گفتگو: انتخاب محصول برای ویرایش
-conversation_admin_select_product = "✏️ کدام محصول را می‌خواهید ویرایش کنید؟"
+# Conversation: select a product to edit
+conversation_admin_select_product = "✏️ What product do you want to edit?"
 
-# گفتگو: انتخاب محصول برای حذف
-conversation_admin_select_product_to_delete = "❌ کدام محصول را می‌خواهید حذف کنید؟"
+# Conversation: select a product to delete
+conversation_admin_select_product_to_delete = "❌ What product do you want to delete?"
 
-# گفتگو: انتخاب کاربر برای ویرایش
-conversation_admin_select_user = "یک کاربر برای ویرایش انتخاب کنید."
+# Conversation: select a user to edit
+conversation_admin_select_user = "Select an user to edit."
 
-# گفتگو: برای پرداخت خرید در زیر کلیک کنید
-conversation_cart_actions = "<i>با پیمایش به بالا و فشار دادن دکمه افزودن در زیر محصولات مورد نظر، محصولات را به سبد خرید اضافه کنید. هنگامی که کار شما به پایان رسید، به این پیام برگردید و دکمه پایان را در زیر فشار دهید.</i>"
+# Conversation: click below to pay for the purchase
+conversation_cart_actions = "<i>Add products to cart by scrolling up and pressing the Add button below" \
+                            " the products you want to add to the cart. When you're done, go back to this message and" \
+                            " press the Done button below.</i>"
 
-# گفتگو: تأیید محتوای سبد خرید
-conversation_confirm_cart = "🛒 سبد خرید شما شامل محصولات زیر است:\n" \
+# Conversation: confirm the cart contents
+conversation_confirm_cart = "🛒 Your cart contains the following products:\n" \
                             "{product_list}" \
-                            "جمع کل: <b>{total_cost}</b>\n" \
+                            "Total: <b>{total_cost}</b>\n" \
                             "\n" \
-                            "<i>اگر می‌خواهید ادامه دهید، دکمه پایان را در زیر این پیام فشار دهید.\n" \
-                            "برای لغو، دکمه لغو را فشار دهید.</i>"
+                            "<i>If you want to proceed, press the Done button below this message.\n" \
+                            "To cancel, press the Cancel button.</i>"
 
-# حالت سفارش‌های زنده: شروع
-conversation_live_orders_start = "شما در حالت <b>سفارش‌های زنده</b> هستید\n" \
-                                 "تمام سفارش‌های جدیدی که توسط مشتریان ثبت می‌شوند در زمان واقعی در این چت ظاهر می‌شوند و شما" \
-                                 "می‌توانید آن‌ها را به عنوان ✅ تکمیل شده علامت‌گذاری کنید" \
-                                 "یا ✴️ اعتبار را به مشتری بازپرداخت کنید."
+# Live orders mode: start
+conversation_live_orders_start = "You are in <b>Live Orders</b> mode\n" \
+                                 "All new orders placed by customers will appear in real time in this chat, and you" \
+                                 " will be able to mark them as ✅ Completed" \
+                                 " or ✴️ Refund the credit to the customer."
 
-# حالت سفارش‌های زنده: توقف دریافت پیام‌ها
-conversation_live_orders_stop = "<i>برای توقف فید، دکمه توقف را در زیر این پیام فشار دهید.</i>"
+# Live orders mode: stop receiving messages
+conversation_live_orders_stop = "<i>Press the Stop button below this message to stop the" \
+                                " feed.</i>"
 
-# گفتگو: منوی کمک باز شده است
-conversation_open_help_menu = "چه نوع کمکی نیاز دارید؟"
+# Conversation: help menu has been opened
+conversation_open_help_menu = "What kind of help do you need?"
 
-# گفتگو: تأیید ترفیع به مدیر
-conversation_confirm_admin_promotion = "آیا مطمئن هستید که می‌خواهید این کاربر را به 💼 مدیر ترفیع دهید؟\n" \
-                                       "این یک عمل غیرقابل بازگشت است!"
+# Conversation: confirm promotion to admin
+conversation_confirm_admin_promotion = "Are you sure you want to promote this user to 💼 Manager?\n" \
+                                       "It is an irreversible action!"
 
-# گفتگو: منوی انتخاب زبان
-conversation_language_select = "یک زبان انتخاب کنید:"
+# Conversation: language select menu header
+conversation_language_select = "Select a language:"
 
-# گفتگو: تغییر به حالت کاربر
-conversation_switch_to_user_mode = " شما در حال تغییر به حالت 👤 مشتری هستید.\n" \
-                                   "اگر می‌خواهید به منوی 💼 مدیر برگردید، مکالمه را با /start مجدداً شروع کنید."
+# Conversation: switching to user mode
+conversation_switch_to_user_mode = " You are switching to 👤 Customer mode.\n" \
+                                   "If you want to go back to the 💼 Manager menu, restart the conversation with /start."
 
-# اطلاع‌رسانی: مکالمه منقضی شده است
-conversation_expired = "🕐 مدتی است پیامی دریافت نکرده‌ام، بنابراین برای صرفه‌جویی در منابع مکالمه را بستم.\n" \
-                       "اگر می‌خواهید یک مکالمه جدید شروع کنید، دستور /start جدید ارسال کنید."
+# Notification: the conversation has expired
+conversation_expired = "🕐  I haven't received any messages in a while, so I closed the conversation to save" \
+                       " resources.\n" \
+                       "If you want to start a new one, send a new /start command."
 
-# منوی کاربر: سفارش
-menu_order = "🛒 سفارش محصولات"
+# User menu: order
+menu_order = "🛒 Order products"
 
-# منوی کاربر: وضعیت سفارش
-menu_order_status = "🛍 سفارش‌های من"
+# User menu: order status
+menu_order_status = "🛍 My orders"
 
-# منوی کاربر: اضافه کردن اعتبار
-menu_add_credit = "💵 افزودن وجه"
+# User menu: add credit
+menu_add_credit = "💵 Add funds"
 
-# منوی کاربر: اطلاعات ربات
-menu_bot_info = "ℹ️ اطلاعات ربات"
+# User menu: bot info
+menu_bot_info = "ℹ️ Bot info"
 
-# منوی کاربر: پول نقد
-menu_cash = "💵 با پول نقد"
+# User menu: cash
+menu_cash = "💵 With cash"
 
-# منوی کاربر: کارت اعتباری
-menu_credit_card = "💳 با کارت اعتباری"
+# User menu: credit card
+menu_credit_card = "💳 By credit card"
 
-# منوی مدیر: محصولات
-menu_products = "📝️ محصولات"
+# Admin menu: products
+menu_products = "📝️ Products"
 
-# منوی مدیر: سفارش‌ها
-menu_orders = "📦 سفارش‌ها"
+# Admin menu: orders
+menu_orders = "📦 Orders"
 
-# منو: تراکنش‌ها
-menu_transactions = "💳 لیست تراکنش‌ها"
+# Menu: transactions
+menu_transactions = "💳 Transaction list"
 
-# منو: ویرایش اعتبار
-menu_edit_credit = "💰 ایجاد تراکنش"
+# Menu: edit credit
+menu_edit_credit = "💰 Create transaction"
 
-# منوی مدیر: تغییر به حالت کاربر
-menu_user_mode = "👤 تغییر به حالت مشتری"
+# Admin menu: go to user mode
+menu_user_mode = "👤 Switch to customer mode"
 
-# منوی مدیر: اضافه کردن محصول
-menu_add_product = "✨ محصول جدید"
+# Admin menu: add product
+menu_add_product = "✨ New product"
 
-# منوی مدیر: حذف محصول
-menu_delete_product = "❌ حذف محصول"
+# Admin menu: delete product
+menu_delete_product = "❌ Delete product"
 
-# منو: لغو
-menu_cancel = "🔙 لغو"
+# Menu: cancel
+menu_cancel = "🔙 Cancel"
 
-# منو: پرش
-menu_skip = "⏭ پرش"
+# Menu: skip
+menu_skip = "⏭ Skip"
 
-# منو: انجام شد
-menu_done = "✅️ انجام شد"
+# Menu: done
+menu_done = "✅️ Done"
 
-# منو: پرداخت فاکتور
-menu_pay = "💳 پرداخت"
+# Menu: pay invoice
+menu_pay = "💳 Pay"
 
-# منو: تکمیل
-menu_complete = "✅ تکمیل"
+# Menu: complete
+menu_complete = "✅ Complete"
 
-# منو: بازپرداخت
-menu_refund = "✴️ بازپرداخت"
+# Menu: refund
+menu_refund = "✴️ Refund"
 
-# منو: توقف
-menu_stop = "🛑 توقف"
+# Menu: stop
+menu_stop = "🛑 Stop"
 
-# منو: اضافه به سبد خرید
-menu_add_to_cart = "➕ افزودن"
+# Menu: add to cart
+menu_add_to_cart = "➕ Add"
 
-# منو: حذف از سبد خرید
-menu_remove_from_cart = "➖ حذف"
+# Menu: remove from cart
+menu_remove_from_cart = "➖ Remove"
 
-# منو: منوی کمک
-menu_help = "❓ کمک / پشتیبانی"
+# Menu: help menu
+menu_help = "❓ Help / Support"
 
-# منو: راهنما
-menu_guide = "📖 راهنما"
+# Menu: guide
+menu_guide = "📖 Guide"
 
-# منو: صفحه بعدی
-menu_next = "▶️ بعدی"
+# Menu: next page
+menu_next = "▶️ Next"
 
-# منو: صفحه قبلی
-menu_previous = "◀️ قبلی"
+# Menu: previous page
+menu_previous = "◀️ Previous"
 
-# منو: تماس با فروشنده
-menu_contact_shopkeeper = "👨‍💼 تماس با فروشگاه"
+# Menu: contact the shopkeeper
+menu_contact_shopkeeper = "👨‍💼 Contact the store"
 
-# گفتگو: درخواست قیمت محصول جدید
-conversation_new_product_price = "📏 قیمت این محصول چقدر است؟"
+# Menu: generate transactions .csv file
+menu_csv = "📄 .csv"
 
-# گفتگو: درخواست توضیحات محصول جدید
-conversation_new_product_description = "🔤 توضیحات محصول جدید چیست؟"
+# Menu: edit admins list
+menu_edit_admins = "🏵 Edit Managers"
 
-# گفتگو: درخواست نام محصول جدید
-conversation_new_product_name = "🔤 نام این محصول جدید چیست؟"
+# Menu: language
+menu_language = "🇬🇧 Language"
 
-# گفتگو: محصول جدید ذخیره شده
-conversation_new_product_saved = "✨ محصول جدید <b>{name}</b> با موفقیت ذخیره شد!"
+# Emoji: unprocessed order
+emoji_not_processed = "*️⃣"
 
-# گفتگو: حذف محصول تایید شد
-conversation_delete_product_confirm = "❌ آیا مطمئن هستید که می‌خواهید <b>{name}</b> را حذف کنید؟\n" \
-                                      "این یک عمل غیرقابل بازگشت است!"
+# Emoji: completed order
+emoji_completed = "✅"
 
-# گفتگو: محصول حذف شد
-conversation_product_deleted = "❌ محصول <b>{name}</b> حذف شد."
+# Emoji: refunded order
+emoji_refunded = "✴️"
 
-# گفتگو: ترفیع کاربر به مدیر تایید شد
-conversation_admin_promotion_confirmed = "💼 کاربر <b>{username}</b> با موفقیت به مدیر ترفیع داده شد."
+# Emoji: yes
+emoji_yes = "✅"
 
-# گفتگو: درخواست نام کاربر جدید
-conversation_new_user_name = "🔤 نام کاربر چیست؟"
+# Emoji: no
+emoji_no = "🚫"
 
-# گفتگو: درخواست افزودن اعتبار به کاربر
-conversation_add_credit_to_user = "💰 چه مقدار اعتبار به این کاربر اضافه شود؟"
+# Text: unprocessed order
+text_not_processed = "pending"
 
-# گفتگو: اعتبار با موفقیت اضافه شد
-conversation_credit_added = "✨ <b>{amount}</b> به اعتبار کاربر <b>{username}</b> اضافه شد."
+# Text: completed order
+text_completed = "completed"
 
-# گفتگو: تراکنش با موفقیت تکمیل شد
-conversation_transaction_complete = "✅ تراکنش با موفقیت تکمیل شد."
+# Text: refunded order
+text_refunded = "refunded"
 
-# گفتگو: سفارش لغو شد
-conversation_order_cancelled = "❌ سفارش لغو شد."
+# Text: product not for sale
+text_not_for_sale = "Not for sale"
 
-# گفتگو: درخواست تعداد محصول برای سبد خرید
-conversation_add_product_quantity = "چند عدد از این محصول را می‌خواهید اضافه کنید؟"
+# Add product: name?
+ask_product_name = "What should the product name be?"
 
-# گفتگو: محصول به سبد خرید اضافه شد
-conversation_product_added_to_cart = "✨ <b>{name}</b> به سبد خرید شما اضافه شد."
+# Add product: description?
+ask_product_description = "What should the product description be?"
 
-# گفتگو: محصول از سبد خرید حذف شد
-conversation_product_removed_from_cart = "❌ <b>{name}</b> از سبد خرید شما حذف شد."
+# Add product: price?
+ask_product_price = "What should the product price be?\n" \
+                    "Enter <code>X</code> if don't want the product to be for sale yet."
 
-# گفتگو: سبد خرید شما خالی است
-conversation_cart_empty = "🛒 سبد خرید شما خالی است."
+# Add product: image?
+ask_product_image = "🖼 What image do you want the product to have?\n" \
+                    "\n" \
+                    "<i>Send the photo, or Skip this phase and don't add any image.</i>"
 
-# گفتگو: خطای موجودی
-conversation_stock_error = "🚫 محصول <b>{name}</b> در حال حاضر موجود نیست."
+# Order product: notes?
+ask_order_notes = "Would you like to leave a note along with the order?\n" \
+                  "💼 It will be visible to the store Managers.\n" \
+                  "\n" \
+                  "<i>Send a message with the note you want to leave, or press the Skip button below this" \
+                  " message to leave nothing.</i>"
 
-# گفتگو: خطای پرداخت
-conversation_payment_error = "🚫 پرداخت ناموفق بود. لطفاً دوباره تلاش کنید."
+# Refund product: reason?
+ask_refund_reason = " Attach a reason to this refund.\n" \
+                    "👤  It will be visible to the customer."
 
-# گفتگو: پرداخت موفق
-conversation_payment_success = "✅ پرداخت با موفقیت انجام شد!"
+# Edit credit: notes?
+ask_transaction_notes = " Attach a note to this transaction.\n" \
+                        "👤 It will be visible to the customer after crediting / debiting" \
+                        " and to 💼 Admins in the transaction log."
 
-# منو: لغو سفارش
-menu_cancel_order = "❌ لغو سفارش"
+# Edit credit: amount?
+ask_credit = "How do you want to change the customer's credit?\n" \
+             "\n" \
+             "<i>Send a message containing the amount.\n" \
+             "Use the sign </i><code>+</code><i> to add credit to the customer's account," \
+             " and the sign </i><code>-</code><i> to deduce it.</i>"
 
-# منو: ویرایش محصول
-menu_edit_product = "✏️ ویرایش محصول"
+# Header for the edit admin message
+admin_properties = "<b>Permissions of {name}:</b>"
 
-# منو: افزودن به سبد خرید
-menu_add_to_cart = "➕ افزودن به سبد خرید"
+# Edit admin: can edit products?
+prop_edit_products = "Edit products"
 
-# منو: حذف از سبد خرید
-menu_remove_from_cart = "➖ حذف از سبد خرید"
+# Edit admin: can receive orders?
+prop_receive_orders = "Receive orders"
 
-# منو: بازگشت
-menu_back = "🔙 بازگشت"
+# Edit admin: can create transactions?
+prop_create_transactions = "Manage transactions"
 
-# منو: تایید
-menu_confirm = "✅ تایید"
+# Edit admin: show on help message?
+prop_display_on_help = "Show to customer"
 
-# منو: پرداخت با کارت اعتباری
-menu_pay_with_credit_card = "💳 پرداخت با کارت اعتباری"
+# Thread has started downloading an image and might be unresponsive
+downloading_image = "I'm downloading your photo!\n" \
+                    "It might take a while... Please be patient!\n" \
+                    "I won't be able to answer you while I'm downloading."
 
-# منو: پرداخت با پول نقد
-menu_pay_with_cash = "💵 پرداخت با پول نقد"
+# Edit product: current value
+edit_current_value = "The current value is:\n" \
+                     "<pre>{value}</pre>\n" \
+                     "\n" \
+                     "<i>Press the Skip button below this message to keep the same value.</i>"
 
-# منو: ویرایش محصول
-menu_edit_product = "✏️ ویرایش محصول"
+# Payment: cash payment info
+payment_cash = "You can pay in cash at the physical location of the store.\n" \
+               "Pay at checkout, and give this id to the manager:\n" \
+               "<b>{user_cash_id}</b>"
 
-# منو: ایجاد سفارش جدید
-menu_new_order = "🛒 سفارش جدید"
+# Payment: invoice amount
+payment_cc_amount = "How many funds do you want to add to your wallet?\n" \
+                    "\n" \
+                    "<i>Select an amount with the buttons below, or enter it manually with the normal keyboard</i>"
 
-# منو: وضعیت سفارش
-menu_order_status = "🛍 وضعیت سفارش"
+# Payment: add funds invoice title
+payment_invoice_title = "Adding funds"
 
-# منو: تایید سفارش
-menu_confirm_order = "✅ تایید سفارش"
+# Payment: add funds invoice description
+payment_invoice_description = "Paying this invoice will add {amount} to your wallet."
 
-# منو: لغو سفارش
-menu_cancel_order = "❌ لغو سفارش"
+# Payment: label of the labeled price on the invoice
+payment_invoice_label = "Reload"
 
-# منو: ویرایش محصول
-menu_edit_product = "✏️ ویرایش محصول"
+# Payment: label of the labeled price on the invoice
+payment_invoice_fee_label = "Transaction fee"
 
-# Error: پیام در یک چت خصوصی ارسال نشده است
-error_nonprivate_chat = "⚠️ این ربات فقط در چت‌های خصوصی کار می‌کند."
-
-# Error: پیامی در یک چت ارسال شد، اما هیچ پردازنده‌ای برای آن چت وجود ندارد.
-# پیشنهاد ایجاد یک پردازنده جدید با استفاده از /start
-error_no_worker_for_chat = "⚠️ مکالمه با ربات قطع شده است.\n" \
-                           "برای شروع مجدد، دستور /start را به ربات ارسال کنید."
-
-# Error: پیامی در یک چت ارسال شد، اما پردازنده برای آن چت آماده نیست.
-error_worker_not_ready = "🕒 مکالمه با ربات در حال شروع است.\n" \
-                         "لطفاً چند لحظه صبر کنید و سپس دوباره دستورات خود را ارسال کنید!"
-
-# Error: مقدار پرداخت بالاتر از حداکثر است
-error_payment_amount_over_max = "⚠️ حداکثر مبلغی که می‌توان در یک تراکنش اضافه کرد {max_amount} است."
-
-# Error: مقدار پرداخت کمتر از حداقل است
-error_payment_amount_under_min = "⚠️ حداقل مبلغی که می‌توان در یک تراکنش اضافه کرد {min_amount} است."
-
-# Error: این فاکتور منقضی شده و نمی‌توان آن را پرداخت کرد
-error_invoice_expired = "⚠️ این فاکتور منقضی شده و لغو شده است. اگر هنوز می‌خواهید وجهی اضافه کنید، از گزینه اضافه کردن اعتبار در منوی افزودن استفاده کنید."
-
-# Error: محصولی با این نام قبلاً وجود دارد
-error_duplicate_name = "⚠️ محصولی با همین نام از قبل موجود است."
-
-# Error: اعتبار کافی برای سفارش وجود ندارد
-error_not_enough_credit = "⚠️ اعتبار کافی برای ثبت سفارش ندارید."
-
-# Error: این سفارش قبلاً تکمیل شده است
-error_order_already_cleared = "⚠️ این سفارش قبلاً پردازش شده است."
-
-# Error: هیچ سفارشی ثبت نشده، بنابراین چیزی برای نمایش وجود ندارد
-error_no_orders = "⚠️ شما هنوز هیچ سفارشی ثبت نکرده‌اید، بنابراین چیزی برای نمایش وجود ندارد."
-
-# Error: کاربر انتخاب شده وجود ندارد
-error_user_does_not_exist = "⚠️ کاربر انتخاب شده وجود ندارد."
-
-# خطا: مکالمه با یک استثنا قطع شد
-fatal_conversation_exception = "☢️ اوه نه! یک <b>خطا</b> این مکالمه را قطع کرده است\n" \
-                               "خطا به مالک ربات گزارش داده شد تا او بتواند آن را رفع کند.\n" \
-                               "برای شروع مجدد مکالمه، دستور /start را ارسال کنید."
-
-# تراکنش: عنوان رسید
-payment_invoice_title = "افزودن اعتبار"
-
-# تراکنش: توضیحات رسید
-payment_invoice_description = "پرداخت این فاکتور {amount} را به کیف پول شما اضافه خواهد کرد."
-
-# تراکنش: برچسب قیمت در فاکتور
-payment_invoice_label = "افزایش اعتبار"
-
-# تراکنش: برچسب کارمزد در فاکتور
-payment_invoice_fee_label = "هزینه تراکنش"
-
-# اطلاع‌رسانی: سفارش ثبت شده است
-notification_order_placed = "یک سفارش جدید ثبت شده است:\n" \
+# Notification: order has been placed
+notification_order_placed = "A new order was placed:\n" \
                             "\n" \
                             "{order}"
 
-# اطلاع‌رسانی: سفارش تکمیل شد
-notification_order_completed = "سفارش شما تکمیل شده است!\n" \
+# Notification: order has been completed
+notification_order_completed = "Your order has been completed!\n" \
                                "\n" \
                                "{order}"
 
-# اطلاع‌رسانی: سفارش بازپرداخت شد
-notification_order_refunded = "سفارش شما بازپرداخت شده است!\n" \
+# Notification: order has been refunded
+notification_order_refunded = "Your order has been refunded!\n" \
                               "\n" \
                               "{order}"
 
-# اطلاع‌رسانی: یک تراکنش دستی اعمال شد
-notification_transaction_created = "ℹ️  یک تراکنش جدید به کیف پول شما اضافه شد:\n" \
+# Notification: a manual transaction was applied
+notification_transaction_created = "ℹ️  A new transaction has been applied to your wallet:\n" \
                                    "{transaction}"
 
-# دلیل بازپرداخت
-refund_reason = "دلیل بازپرداخت:\n" \
+# Refund reason
+refund_reason = "Refund reason:\n" \
                 "{reason}"
 
-# اطلاعات: اطلاعات در مورد ربات
-bot_info = 'این ربات از <a href="https://github.com/Steffo99/greed">greed</a> استفاده می‌کند،' \
-           ' یک فریمورک توسط @Steffo برای پرداخت‌های تلگرام که تحت' \
+# Info: informazioni sul bot
+bot_info = 'This bot is using <a href="https://github.com/Steffo99/greed">greed</a>,' \
+           ' a framework by @Steffo for Telegram payments released under the' \
            ' <a href="https://github.com/Steffo99/greed/blob/master/LICENSE.txt">' \
-           'مجوز Affero General Public License 3.0</a> منتشر شده است.\n'
+           'Affero General Public License 3.0</a>.\n'
 
-# راهنما: راهنما
-help_msg = "راهنمای greed در این آدرس موجود است:\n" \
+# Help: guide
+help_msg = "greed's guide is available at this address:\n" \
            "https://github.com/Steffo99/greed/wiki"
 
-# راهنما: تماس با فروشنده
-contact_shopkeeper = "در حال حاضر، کادر موجود برای ارائه کمک به کاربر شامل:\n" \
+# Help: contact shopkeeper
+contact_shopkeeper = "Currently, the staff available to provide user assistance is composed of:\n" \
                      "{shopkeepers}\n" \
-                     "<i>روی نام آن‌ها کلیک کنید تا در چت تلگرام با آن‌ها ارتباط بگیرید.</i>"
+                     "<i>Click / Tap one of their names to contact them in a Telegram chat.</i>"
 
-# موفقیت: محصول با موفقیت اضافه/ویرایش شد
-success_product_edited = "✅ محصول با موفقیت اضافه/ویرایش شد!"
+# Success: product has been added/edited to the database
+success_product_edited = "✅ The product has been successfully added/modified!"
 
-# موفقیت: محصول با موفقیت حذف شد
-success_product_deleted = "✅ محصول با موفقیت حذف شد!"
+# Success: product has been added/edited to the database
+success_product_deleted = "✅ The product has been successfully deleted!"
 
-# موفقیت: سفارش با موفقیت ایجاد شد
-success_order_created = "✅ سفارش با موفقیت ثبت شد!\n" \
+# Success: order has been created
+success_order_created = "✅ The order was sent successfully!\n" \
                         "\n" \
                         "{order}"
 
-# موفقیت: سفارش به عنوان تکمیل شده علامت‌گذاری شد
-success_order_completed = "✅ سفارش #{order_id} به عنوان تکمیل شده علامت‌گذاری شد."
+# Success: order was marked as completed
+success_order_completed = "✅ You marked the order #{order_id} as completed."
 
-# موفقیت: سفارش با موفقیت بازپرداخت شد
-success_order_refunded = "✴️ سفارش #{order_id} بازپرداخت شد."
+# Success: order was refunded successfully
+success_order_refunded = "✴️ Order #{order_id} was refunded."
 
-# موفقیت: تراکنش با موفقیت ایجاد شد
-success_transaction_created = "✅ تراکنش با موفقیت ایجاد شد!\n" \
+# Success: transaction was created successfully
+success_transaction_created = "✅ The transaction was successfully created!\n" \
                               "{transaction}"
+
+# Error: message received not in a private chat
+error_nonprivate_chat = "⚠️ This bot only works in private chats."
+
+# Error: a message was sent in a chat, but no worker exists for that chat.
+# Suggest the creation of a new worker with /start
+error_no_worker_for_chat = "⚠️ The conversation with the bot was interrupted.\n" \
+                           "To restart it, send the /start command to the bot."
+
+# Error: a message was sent in a chat, but the worker for that chat is not ready.
+error_worker_not_ready = "🕒 The conversation with the bot is currently starting.\n" \
+                         "Please, wait a few moments before sending more commands!"
+
+# Error: add funds amount over max
+error_payment_amount_over_max = "⚠️ The maximum amount that can be added in a single transaction is {max_amount}."
+
+# Error: add funds amount under min
+error_payment_amount_under_min = "⚠️ The minimum amount that can be added in a single transaction is {min_amount}."
+
+# Error: the invoice has expired and can't be paid
+error_invoice_expired = "⚠️ This invoice has expired and was canceled. If you still want to add funds, use the Add" \
+                        " funds menu option."
+
+# Error: a product with that name already exists
+error_duplicate_name = "️⚠️ A product with the same name already exists."
+
+# Error: not enough credit to order
+error_not_enough_credit = "⚠️ You do not have enough credit to place the order."
+
+# Error: order has already been cleared
+error_order_already_cleared = "⚠️  This order has already been processed."
+
+# Error: no orders have been placed, so none can be shown
+error_no_orders = "⚠️  You haven't placed any order yet, so there is nothing to display."
+
+# Error: selected user does not exist
+error_user_does_not_exist = "⚠️  The selected user does not exist."
+
+# Fatal: conversation raised an exception
+fatal_conversation_exception = "☢️ Oh no! An <b>error</b> interrupted this conversation\n" \
+                               "The error was reported to the bot owner so that he can fix it.\n" \
+                               "To restart the conversation, send the /start command again."

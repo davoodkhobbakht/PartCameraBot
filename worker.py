@@ -312,54 +312,6 @@ class Worker(threading.Thread):
             # Return the first capture group
             return match.group(1)
 
-    def __wait_for_precheckoutquery(self,
-                                    cancellable: bool = False) -> Union[telegram.PreCheckoutQuery, CancelSignal]:
-        """Continue getting updates until a precheckoutquery is received.
-        The payload is checked by the core before forwarding the message."""
-        log.debug("Waiting for a PreCheckoutQuery...")
-        while True:
-            # Get the next update
-            update = self.__receive_next_update()
-            # If a CancelSignal is received...
-            if isinstance(update, CancelSignal):
-                # And the wait is cancellable...
-                if cancellable:
-                    # Return the CancelSignal
-                    return update
-                else:
-                    # Ignore the signal
-                    continue
-            # Ensure the update contains a precheckoutquery
-            if update.pre_checkout_query is None:
-                continue
-            # Return the precheckoutquery
-            return update.pre_checkout_query
-
-    def __wait_for_successfulpayment(self,
-                                     cancellable: bool = False) -> Union[telegram.SuccessfulPayment, CancelSignal]:
-        """Continue getting updates until a successfulpayment is received."""
-        log.debug("Waiting for a SuccessfulPayment...")
-        while True:
-            # Get the next update
-            update = self.__receive_next_update()
-            # If a CancelSignal is received...
-            if isinstance(update, CancelSignal):
-                # And the wait is cancellable...
-                if cancellable:
-                    # Return the CancelSignal
-                    return update
-                else:
-                    # Ignore the signal
-                    continue
-            # Ensure the update contains a message
-            if update.message is None:
-                continue
-            # Ensure the message is a successfulpayment
-            if update.message.successful_payment is None:
-                continue
-            # Return the successfulpayment
-            return update.message.successful_payment
-
     def __wait_for_photo(self, cancellable: bool = False) -> Union[List[telegram.PhotoSize], CancelSignal]:
         """Continue getting updates until a photo is received, then return it."""
         log.debug("Waiting for a photo...")
@@ -447,7 +399,6 @@ class Worker(threading.Thread):
             keyboard = [[telegram.KeyboardButton(self.loc.get("menu_order"))],
                         [telegram.KeyboardButton(self.loc.get("menu_order_status"))],
                         [telegram.KeyboardButton(self.loc.get("menu_add_credit"))],
-                        [telegram.KeyboardButton(self.loc.get("menu_language"))],
                         [telegram.KeyboardButton(self.loc.get("menu_help")),
                          telegram.KeyboardButton(self.loc.get("menu_bot_info"))]]
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
@@ -459,7 +410,6 @@ class Worker(threading.Thread):
             selection = self.__wait_for_specific_message([
                 self.loc.get("menu_order"),
                 self.loc.get("menu_order_status"),
-                self.loc.get("menu_add_credit"),
                 self.loc.get("menu_help"),
                 self.loc.get("menu_bot_info"),
             ])
@@ -473,11 +423,6 @@ class Worker(threading.Thread):
             elif selection == self.loc.get("menu_order_status"):
                 # Display the order(s) status
                 self.__order_status()
-            # If the user has selected the Add Credit option...
-            elif selection == self.loc.get("menu_add_credit"):
-                # Display the add credit menu
-                self.__add_credit_menu()
-            
             # If the user has selected the Bot Info option...
             elif selection == self.loc.get("menu_bot_info"):
                 # Display information about the bot
@@ -727,151 +672,6 @@ class Worker(threading.Thread):
             self.bot.send_message(self.chat.id, order.text(w=self, user=True))
         # TODO: maybe add a page displayer instead of showing the latest 5 orders
 
-    def __add_credit_menu(self):
-        """Add more credit to the account."""
-        log.debug("Displaying __add_credit_menu")
-        # Create a payment methods keyboard
-        keyboard = list()
-        # Add the supported payment methods to the keyboard
-        # Cash
-        if self.cfg["Payments"]["Cash"]["enable_pay_with_cash"]:
-            keyboard.append([telegram.KeyboardButton(self.loc.get("menu_cash"))])
-        # Telegram Payments
-        if self.cfg["Payments"]["CreditCard"]["credit_card_token"] != "":
-            keyboard.append([telegram.KeyboardButton(self.loc.get("menu_credit_card"))])
-        # Keyboard: go back to the previous menu
-        keyboard.append([telegram.KeyboardButton(self.loc.get("menu_cancel"))])
-        # Send the keyboard to the user
-        self.bot.send_message(self.chat.id, self.loc.get("conversation_payment_method"),
-                              reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
-        # Wait for a reply from the user
-        selection = self.__wait_for_specific_message(
-            [self.loc.get("menu_cash"), self.loc.get("menu_credit_card"), self.loc.get("menu_cancel")],
-            cancellable=True)
-        # If the user has selected the Cash option...
-        if selection == self.loc.get("menu_cash") and self.cfg["Payments"]["Cash"]["enable_pay_with_cash"]:
-            # Go to the pay with cash function
-            self.bot.send_message(self.chat.id,
-                                  self.loc.get("payment_cash", user_cash_id=self.user.identifiable_str()))
-        # If the user has selected the Credit Card option...
-        elif selection == self.loc.get("menu_credit_card") and self.cfg["Payments"]["CreditCard"]["credit_card_token"]:
-            # Go to the pay with credit card function
-            self.__add_credit_cc()
-        # If the user has selected the Cancel option...
-        elif isinstance(selection, CancelSignal):
-            # Send him back to the previous menu
-            return
-
-    def __add_credit_cc(self):
-        """Add money to the wallet through a credit card payment."""
-        log.debug("Displaying __add_credit_cc")
-        # Create a keyboard to be sent later
-        presets = self.cfg["Payments"]["CreditCard"]["payment_presets"]
-        keyboard = [[telegram.KeyboardButton(str(self.Price(preset)))] for preset in presets]
-        keyboard.append([telegram.KeyboardButton(self.loc.get("menu_cancel"))])
-        # Boolean variable to check if the user has cancelled the action
-        cancelled = False
-        # Loop used to continue asking if there's an error during the input
-        while not cancelled:
-            # Send the message and the keyboard
-            self.bot.send_message(self.chat.id, self.loc.get("payment_cc_amount"),
-                                  reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
-            # Wait until a valid amount is sent
-            selection = self.__wait_for_regex(r"([0-9]+(?:[.,][0-9]+)?|" + self.loc.get("menu_cancel") + r")",
-                                              cancellable=True)
-            # If the user cancelled the action
-            if isinstance(selection, CancelSignal):
-                # Exit the loop
-                cancelled = True
-                continue
-            # Convert the amount to an integer
-            value = self.Price(selection)
-            # Ensure the amount is within the range
-            if value > self.Price(self.cfg["Payments"]["CreditCard"]["max_amount"]):
-                self.bot.send_message(self.chat.id,
-                                      self.loc.get("error_payment_amount_over_max",
-                                                   max_amount=self.Price(self.cfg["CreditCard"]["max_amount"])))
-                continue
-            elif value < self.Price(self.cfg["Payments"]["CreditCard"]["min_amount"]):
-                self.bot.send_message(self.chat.id,
-                                      self.loc.get("error_payment_amount_under_min",
-                                                   min_amount=self.Price(self.cfg["CreditCard"]["min_amount"])))
-                continue
-            break
-        # If the user cancelled the action...
-        else:
-            # Exit the function
-            return
-        # Issue the payment invoice
-        self.__make_payment(amount=value)
-
-    def __make_payment(self, amount):
-        # Set the invoice active invoice payload
-        self.invoice_payload = str(uuid.uuid4())
-        # Create the price array
-        prices = [telegram.LabeledPrice(label=self.loc.get("payment_invoice_label"), amount=int(amount))]
-        # If the user has to pay a fee when using the credit card, add it to the prices list
-        fee = int(self.__get_total_fee(amount))
-        if fee > 0:
-            prices.append(telegram.LabeledPrice(label=self.loc.get("payment_invoice_fee_label"),
-                                                amount=fee))
-        # Create the invoice keyboard
-        inline_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_pay"),
-                                                                                        pay=True)],
-                                                         [telegram.InlineKeyboardButton(self.loc.get("menu_cancel"),
-                                                                                        callback_data="cmd_cancel")]])
-        # The amount is valid, send the invoice
-        self.bot.send_invoice(self.chat.id,
-                              title=self.loc.get("payment_invoice_title"),
-                              description=self.loc.get("payment_invoice_description", amount=str(amount)),
-                              payload=self.invoice_payload,
-                              provider_token=self.cfg["Payments"]["CreditCard"]["credit_card_token"],
-                              start_parameter="tempdeeplink",
-                              currency=self.cfg["Payments"]["currency"],
-                              prices=prices,
-                              need_name=self.cfg["Payments"]["CreditCard"]["name_required"],
-                              need_email=self.cfg["Payments"]["CreditCard"]["email_required"],
-                              need_phone_number=self.cfg["Payments"]["CreditCard"]["phone_required"],
-                              reply_markup=inline_keyboard,
-                              max_tip_amount=self.cfg["Payments"]["CreditCard"]["max_tip_amount"],
-                              suggested_tip_amounts=self.cfg["Payments"]["CreditCard"]["tip_presets"],
-                              )
-        # Wait for the precheckout query
-        precheckoutquery = self.__wait_for_precheckoutquery(cancellable=True)
-        # Check if the user has cancelled the invoice
-        if isinstance(precheckoutquery, CancelSignal):
-            # Exit the function
-            return
-        # Accept the checkout
-        self.bot.answer_pre_checkout_query(precheckoutquery.id, ok=True)
-        # Wait for the payment
-        successfulpayment = self.__wait_for_successfulpayment(cancellable=False)
-        # Create a new database transaction
-        transaction = db.Transaction(user=self.user,
-                                     value=int(amount),
-                                     provider="Credit Card",
-                                     telegram_charge_id=successfulpayment.telegram_payment_charge_id,
-                                     provider_charge_id=successfulpayment.provider_payment_charge_id)
-
-        if successfulpayment.order_info is not None:
-            transaction.payment_name = successfulpayment.order_info.name
-            transaction.payment_email = successfulpayment.order_info.email
-            transaction.payment_phone = successfulpayment.order_info.phone_number
-        # Update the user's credit
-        self.user.recalculate_credit()
-        # Commit all the changes
-        self.session.commit()
-
-    def __get_total_fee(self, amount):
-        # Calculate a fee for the required amount
-        fee_percentage = self.cfg["Payments"]["CreditCard"]["fee_percentage"] / 100
-        fee_fixed = self.cfg["Payments"]["CreditCard"]["fee_fixed"]
-        total_fee = amount * fee_percentage + fee_fixed
-        if total_fee > 0:
-            return total_fee
-        # Set the fee to 0 to ensure no accidental discounts are applied
-        return 0
-
     def __bot_info(self):
         """Send information about the bot."""
         log.debug("Displaying __bot_info")
@@ -889,10 +689,6 @@ class Worker(threading.Thread):
                 keyboard.append([self.loc.get("menu_products")])
             if self.admin.receive_orders:
                 keyboard.append([self.loc.get("menu_orders")])
-            if self.admin.create_transactions:
-                if self.cfg["Payments"]["Cash"]["enable_create_transaction"]:
-                    keyboard.append([self.loc.get("menu_edit_credit")])
-                keyboard.append([self.loc.get("menu_transactions"), self.loc.get("menu_csv")])
             if self.admin.is_owner:
                 keyboard.append([self.loc.get("menu_edit_admins")])
             keyboard.append([self.loc.get("menu_user_mode")])
@@ -903,8 +699,6 @@ class Worker(threading.Thread):
             selection = self.__wait_for_specific_message([self.loc.get("menu_products"),
                                                           self.loc.get("menu_orders"),
                                                           self.loc.get("menu_user_mode"),
-                                                          self.loc.get("menu_edit_credit"),
-                                                          self.loc.get("menu_transactions"),
                                                           self.loc.get("menu_csv"),
                                                           self.loc.get("menu_edit_admins")])
             # If the user has selected the Products option and has the privileges to perform the action...
@@ -915,11 +709,7 @@ class Worker(threading.Thread):
             elif selection == self.loc.get("menu_orders") and self.admin.receive_orders:
                 # Open the orders menu
                 self.__orders_menu()
-            # If the user has selected the Transactions option and has the privileges to perform the action...
-            elif selection == self.loc.get("menu_edit_credit") and self.admin.create_transactions:
-                # Open the edit credit menu
-                self.__create_transaction()
-            # If the user has selected the User mode option and has the privileges to perform the action...
+           # If the user has selected the User mode option and has the privileges to perform the action...
             elif selection == self.loc.get("menu_user_mode"):
                 # Tell the user how to go back to admin menu
                 self.bot.send_message(self.chat.id, self.loc.get("conversation_switch_to_user_mode"))
@@ -929,10 +719,6 @@ class Worker(threading.Thread):
             elif selection == self.loc.get("menu_edit_admins") and self.admin.is_owner:
                 # Open the edit admin menu
                 self.__add_admin()
-            # If the user has selected the Transactions option and has the privileges to perform the action...
-            elif selection == self.loc.get("menu_transactions") and self.admin.create_transactions:
-                # Open the transaction pages
-                self.__transaction_pages()
             # If the user has selected the .csv option and has the privileges to perform the action...
             elif selection == self.loc.get("menu_csv") and self.admin.create_transactions:
                 # Generate the .csv file
@@ -1197,51 +983,7 @@ class Worker(threading.Thread):
                 # Notify the admin of the refund
                 self.bot.send_message(self.chat.id, self.loc.get("success_order_refunded", order_id=order.order_id))
 
-    def __create_transaction(self):
-        """Edit manually the credit of an user."""
-        log.debug("Displaying __create_transaction")
-        # Make the admin select an user
-        user = self.__user_select()
-        # Allow the cancellation of the operation
-        if isinstance(user, CancelSignal):
-            return
-        # Create an inline keyboard with a single cancel button
-        cancel = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_cancel"),
-                                                                               callback_data="cmd_cancel")]])
-        # Request from the user the amount of money to be credited manually
-        self.bot.send_message(self.chat.id, self.loc.get("ask_credit"), reply_markup=cancel)
-        # Wait for an answer
-        reply = self.__wait_for_regex(r"(-? ?[0-9]+(?:[.,][0-9]{1,2})?)", cancellable=True)
-        # Allow the cancellation of the operation
-        if isinstance(reply, CancelSignal):
-            return
-        # Convert the reply to a price object
-        price = self.Price(reply)
-        # Ask the user for notes
-        self.bot.send_message(self.chat.id, self.loc.get("ask_transaction_notes"), reply_markup=cancel)
-        # Wait for an answer
-        reply = self.__wait_for_regex(r"(.*)", cancellable=True)
-        # Allow the cancellation of the operation
-        if isinstance(reply, CancelSignal):
-            return
-        # Create a new transaction
-        transaction = db.Transaction(user=user,
-                                     value=int(price),
-                                     provider="Manual",
-                                     notes=reply)
-        self.session.add(transaction)
-        # Change the user credit
-        user.recalculate_credit()
-        # Commit the changes
-        self.session.commit()
-        # Notify the user of the credit/debit
-        self.bot.send_message(user.user_id,
-                              self.loc.get("notification_transaction_created",
-                                           transaction=transaction.text(w=self)))
-        # Notify the admin of the success
-        self.bot.send_message(self.chat.id, self.loc.get("success_transaction_created",
-                                                         transaction=transaction.text(w=self)))
-
+   
     def __help_menu(self):
         """Help menu. Allows the user to ask for assistance, get a guide or see some info about the bot."""
         log.debug("Displaying __help_menu")
@@ -1272,60 +1014,6 @@ class Worker(threading.Thread):
             self.bot.send_message(self.chat.id, self.loc.get("contact_shopkeeper", shopkeepers=shopkeepers_string))
         # If the user has selected the Cancel option the function will return immediately
 
-    def __transaction_pages(self):
-        """Display the latest transactions, in pages."""
-        log.debug("Displaying __transaction_pages")
-        # Page number
-        page = 0
-        # Create and send a placeholder message to be populated
-        message = self.bot.send_message(self.chat.id, self.loc.get("loading_transactions"))
-        # Loop used to move between pages
-        while True:
-            # Retrieve the 10 transactions in that page
-            transactions = self.session.query(db.Transaction) \
-                .order_by(db.Transaction.transaction_id.desc()) \
-                .limit(10) \
-                .offset(10 * page) \
-                .all()
-            # Create a list to be converted in inline keyboard markup
-            inline_keyboard_list = [[]]
-            # Don't add a previous page button if this is the first page
-            if page != 0:
-                # Add a previous page button
-                inline_keyboard_list[0].append(
-                    telegram.InlineKeyboardButton(self.loc.get("menu_previous"), callback_data="cmd_previous")
-                )
-            # Don't add a next page button if this is the last page
-            if len(transactions) == 10:
-                # Add a next page button
-                inline_keyboard_list[0].append(
-                    telegram.InlineKeyboardButton(self.loc.get("menu_next"), callback_data="cmd_next")
-                )
-            # Add a Done button
-            inline_keyboard_list.append(
-                [telegram.InlineKeyboardButton(self.loc.get("menu_done"), callback_data="cmd_done")])
-            # Create the inline keyboard markup
-            inline_keyboard = telegram.InlineKeyboardMarkup(inline_keyboard_list)
-            # Create the message text
-            transactions_string = "\n".join([transaction.text(w=self) for transaction in transactions])
-            text = self.loc.get("transactions_page", page=page + 1, transactions=transactions_string)
-            # Update the previously sent message
-            self.bot.edit_message_text(chat_id=self.chat.id, message_id=message.message_id, text=text,
-                                       reply_markup=inline_keyboard)
-            # Wait for user input
-            selection = self.__wait_for_inlinekeyboard_callback()
-            # If Previous was selected...
-            if selection.data == "cmd_previous" and page != 0:
-                # Go back one page
-                page -= 1
-            # If Next was selected...
-            elif selection.data == "cmd_next" and len(transactions) == 10:
-                # Go to the next page
-                page += 1
-            # If Done was selected...
-            elif selection.data == "cmd_done":
-                # Break the loop
-                break
 
     def __transactions_file(self):
         """Generate a .csv file containing the list of all transactions."""

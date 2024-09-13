@@ -460,7 +460,6 @@ class Worker(threading.Thread):
                 self.loc.get("menu_order"),
                 self.loc.get("menu_order_status"),
                 self.loc.get("menu_add_credit"),
-                self.loc.get("menu_language"),
                 self.loc.get("menu_help"),
                 self.loc.get("menu_bot_info"),
             ])
@@ -478,10 +477,7 @@ class Worker(threading.Thread):
             elif selection == self.loc.get("menu_add_credit"):
                 # Display the add credit menu
                 self.__add_credit_menu()
-            # If the user has selected the Language option...
-            elif selection == self.loc.get("menu_language"):
-                # Display the language menu
-                self.__language_menu()
+            
             # If the user has selected the Bot Info option...
             elif selection == self.loc.get("menu_bot_info"):
                 # Display information about the bot
@@ -654,23 +650,26 @@ class Worker(threading.Thread):
                 order_item = db.OrderItem(product=cart[product][0],
                                           order=order)
                 self.session.add(order_item)
-        # Ensure the user has enough credit to make the purchase
-        credit_required = self.__get_cart_value(cart) - self.user.credit
-        # Notify user in case of insufficient credit
-        if credit_required > 0:
-            self.bot.send_message(self.chat.id, self.loc.get("error_not_enough_credit"))
-            # Suggest payment for missing credit value if configuration allows refill
-            if self.cfg["Payments"]["CreditCard"]["credit_card_token"] != "" \
-                    and self.cfg["Appearance"]["refill_on_checkout"] \
-                    and self.Price(self.cfg["Payments"]["CreditCard"]["min_amount"]) <= \
-                    credit_required <= \
-                    self.Price(self.cfg["Payments"]["CreditCard"]["max_amount"]):
-                self.__make_payment(self.Price(credit_required))
-        # If afer requested payment credit is still insufficient (either payment failure or cancel)
-        if self.user.credit < self.__get_cart_value(cart):
-            # Rollback all the changes
-            self.session.rollback()
-        else:
+            self.bot.send_message(self.chat.id, self.loc.get("ask_product_image"), reply_markup=cancel)
+            # Wait for an answer
+            photo_list = self.__wait_for_photo(cancellable=True)
+
+            if isinstance(photo_list, list):
+                # Find the largest photo id
+                largest_photo = photo_list[0]
+                for photo in photo_list[1:]:
+                    if photo.width > largest_photo.width:
+                        largest_photo = photo
+                # Get the file object associated with the photo
+                photo_file = self.bot.get_file(largest_photo.file_id)
+                # Notify the user that the bot is downloading the image and might be inactive for a while
+                self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
+                self.bot.send_chat_action(self.chat.id, action="upload_photo")
+                # Set the image for that product
+                order.set_image(photo_file)
+            # Commit the session changes
+            self.session.commit()
+        
             # User has credit and valid order, perform transaction now
             self.__order_transaction(order=order, value=-int(self.__get_cart_value(cart)))
 
@@ -1458,61 +1457,7 @@ class Worker(threading.Thread):
                 break
         self.session.commit()
 
-    def __language_menu(self):
-        """Select a language."""
-        log.debug("Displaying __language_menu")
-        keyboard = []
-        options: Dict[str, str] = {}
-        # https://en.wikipedia.org/wiki/List_of_language_names
-        if "it" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇮🇹 Italiano"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "it"
-        if "en" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇬🇧 English"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "en"
-        if "ru" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇷🇺 Русский"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "ru"
-        if "uk" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇺🇦 Українська"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "uk"
-        if "zh_cn" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇨🇳 简体中文"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "zh_cn"
-        if "he" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇮🇱 עברית"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "he"
-        if "es_mx" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇲🇽 Español"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "es_mx"
-        if "pt_br" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇧🇷 Português"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "pt_br"
-        if "hi" in self.cfg["Language"]["enabled_languages"]:
-            lang = "🇮🇳 हिन्दी"
-            keyboard.append([telegram.KeyboardButton(lang)])
-            options[lang] = "hi"
-        # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
-        self.bot.send_message(self.chat.id,
-                              self.loc.get("conversation_language_select"),
-                              reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
-        # Wait for an answer
-        response = self.__wait_for_specific_message(list(options.keys()))
-        # Set the language to the corresponding value
-        self.user.language = options[response]
-        # Commit the edit to the database
-        self.session.commit()
-        # Recreate the localization object
-        self.__create_localization()
-
+   
     def __create_localization(self):
         # Check if the user's language is enabled; if it isn't, change it to the default
         if self.user.language not in self.cfg["Language"]["enabled_languages"]:

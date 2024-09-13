@@ -246,6 +246,7 @@ class Order(TableDeclarativeBase):
     # Linked transaction
     transaction = relationship("Transaction", back_populates="order", uselist=False)
 
+    payment_image = Column(LargeBinary)
     # Extra table parameters
     __tablename__ = "orders"
 
@@ -284,6 +285,14 @@ class Order(TableDeclarativeBase):
                              value=str(w.Price(-self.transaction.value))) + \
                    (w.loc.get("refund_reason", reason=self.refund_reason) if self.refund_date is not None else "")
 
+
+    def set_image(self, file: telegram.File):
+        """Download an image from Telegram and store it in the image column.
+        This is a slow blocking function. Try to avoid calling it directly, use a thread if possible."""
+        # Download the photo through a get request
+        r = requests.get(file.file_path)
+        # Store the photo in the database record
+        self.payment_image = r.content
 
 class OrderItem(TableDeclarativeBase):
     """A product that has been purchased as part of an order."""

@@ -650,28 +650,27 @@ class Worker(threading.Thread):
                 order_item = db.OrderItem(product=cart[product][0],
                                           order=order)
                 self.session.add(order_item)
-            self.bot.send_message(self.chat.id, self.loc.get("ask_product_image"), reply_markup=cancel)
-            # Wait for an answer
-            photo_list = self.__wait_for_photo(cancellable=True)
+        self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"), reply_markup=cancel)
+        # Wait for an answer
+        photo_list = self.__wait_for_photo(cancellable=True)
 
-            if isinstance(photo_list, list):
-                # Find the largest photo id
-                largest_photo = photo_list[0]
-                for photo in photo_list[1:]:
-                    if photo.width > largest_photo.width:
-                        largest_photo = photo
-                # Get the file object associated with the photo
-                photo_file = self.bot.get_file(largest_photo.file_id)
-                # Notify the user that the bot is downloading the image and might be inactive for a while
-                self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
-                self.bot.send_chat_action(self.chat.id, action="upload_photo")
-                # Set the image for that product
-                order.set_image(photo_file)
-            # Commit the session changes
-            self.session.commit()
-        
-            # User has credit and valid order, perform transaction now
-            self.__order_transaction(order=order, value=-int(self.__get_cart_value(cart)))
+        if isinstance(photo_list, list):
+            # Find the largest photo id
+            largest_photo = photo_list[0]
+            for photo in photo_list[1:]:
+                if photo.width > largest_photo.width:
+                    largest_photo = photo
+            # Get the file object associated with the photo
+            photo_file = self.bot.get_file(largest_photo.file_id)
+            # Notify the user that the bot is downloading the image and might be inactive for a while
+            self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
+            self.bot.send_chat_action(self.chat.id, action="upload_photo")
+            # Set the image for that product
+            order.set_image(photo_file)
+        # Commit the session changes
+        self.session.commit()
+    
+        self.__order_notify_admins(order=order)
 
     def __get_cart_value(self, cart):
         # Calculate total items value in cart
@@ -690,20 +689,7 @@ class Worker(threading.Thread):
                                                          cart_qty=cart[product_id][1]) + "\n"
         return product_list
 
-    def __order_transaction(self, order, value):
-        # Create a new transaction and add it to the session
-        transaction = db.Transaction(user=self.user,
-                                     value=value,
-                                     order=order)
-        self.session.add(transaction)
-        # Commit all the changes
-        self.session.commit()
-        # Update the user's credit
-        self.user.recalculate_credit()
-        # Commit all the changes
-        self.session.commit()
-        # Notify admins about new transation
-        self.__order_notify_admins(order=order)
+ 
 
     def __order_notify_admins(self, order):
         # Notify the user of the order result

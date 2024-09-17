@@ -633,8 +633,8 @@ class Worker(threading.Thread):
 
     def __order_notify_admins(self, order):
         # Notify the user of the order result
-        self.bot.send_message(self.chat.id, self.loc.get("success_order_created", order=order.text(w=self,
-                                                                                                     user=True)))
+        log.error(self.loc.get("success_order_created", order=order.text(w=self,user=True)))
+        self.bot.send_message(self.chat.id,self.loc.get("success_order_created") )
         self.bot.send_message(self.chat.id, 'hooraa')
 
         # Notify the admins (in Live Orders mode) of the new order

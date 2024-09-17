@@ -609,8 +609,7 @@ class Worker(threading.Thread):
         order.set_image(photo_file)
         # Commit the session changes
         self.session.commit()
-        self.bot.send_message(self.chat.id, 'hooraa')
-
+        
         self.__order_notify_admins(order=order)
 
     def __get_cart_value(self, cart):
@@ -635,7 +634,9 @@ class Worker(threading.Thread):
     def __order_notify_admins(self, order):
         # Notify the user of the order result
         self.bot.send_message(self.chat.id, self.loc.get("success_order_created", order=order.text(w=self,
-                                                                                                   user=True)))
+                                                                                                     user=True)))
+        self.bot.send_message(self.chat.id, 'hooraa')
+
         # Notify the admins (in Live Orders mode) of the new order
         admins = self.session.query(db.Admin).filter_by(live_mode=True).all()
         # Create the order keyboard

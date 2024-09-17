@@ -243,6 +243,7 @@ class Order(TableDeclarativeBase):
     items: typing.List["OrderItem"] = relationship("OrderItem", back_populates="order")
     # Extra details specified by the purchasing user
     notes = Column(Text)
+    
     # Linked transaction
     transaction = relationship("Transaction", back_populates="order", uselist=False)
 
@@ -272,7 +273,7 @@ class Order(TableDeclarativeBase):
                              status_text=status_text,
                              items=items,
                              notes=self.notes,
-                             value=str(w.Price(-self.transaction.value))) + \
+                             value=str(w.Price)) + \
                    (w.loc.get("refund_reason", reason=self.refund_reason) if self.refund_date is not None else "")
         else:
             return status_emoji + " " + \
@@ -282,7 +283,7 @@ class Order(TableDeclarativeBase):
                              date=self.creation_date.isoformat(),
                              items=items,
                              notes=self.notes if self.notes is not None else "",
-                             value=str(w.Price(-self.transaction.value))) + \
+                             value=str(w.Price)) + \
                    (w.loc.get("refund_reason", reason=self.refund_reason) if self.refund_date is not None else "")
 
 

@@ -609,7 +609,8 @@ class Worker(threading.Thread):
         order.set_image(photo_file)
         # Commit the session changes
         self.session.commit()
-    
+        self.bot.send_message(self.chat.id, 'hooraa')
+
         self.__order_notify_admins(order=order)
 
     def __get_cart_value(self, cart):

@@ -595,6 +595,7 @@ class Worker(threading.Thread):
                 order_item = db.OrderItem(product=cart[product][0],
                                           order=order)
                 self.session.add(order_item)
+
         self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"), reply_markup=cancel)
         # Wait for an answer
         payment_photo = self.__wait_for_photo(cancellable=False)
@@ -609,7 +610,21 @@ class Worker(threading.Thread):
         order.set_image(photo_file)
         # Commit the session changes
         self.session.commit()
+        self.__order_transaction(order=order, value=-int(self.__get_cart_value(cart)))
         
+    def __order_transaction(self, order, value):
+        # Create a new transaction and add it to the session
+        transaction = db.Transaction(user=self.user,
+                                     value=value,
+                                     order=order)
+        self.session.add(transaction)
+        # Commit all the changes
+        self.session.commit()
+        # Update the user's credit
+        #self.user.recalculate_credit()
+        # Commit all the changes
+        #self.session.commit()
+        # Notify admins about new transation
         self.__order_notify_admins(order=order)
 
     def __get_cart_value(self, cart):
@@ -633,7 +648,7 @@ class Worker(threading.Thread):
 
     def __order_notify_admins(self, order):
         # Notify the user of the order result
-        self.bot.send_message(self.chat.id,self.loc.get("success_order_created") ,self.loc.get("success_order_created", order=order.text(w=self,user=True)))
+        self.bot.send_message(self.chat.id,self.loc.get("success_order_created") ,self.loc.get("success_order_created", order=order.text(w=self,user=True ,)))
         
         # Notify the admins (in Live Orders mode) of the new order
         admins = self.session.query(db.Admin).filter_by(live_mode=True).all()

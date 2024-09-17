@@ -597,21 +597,16 @@ class Worker(threading.Thread):
                 self.session.add(order_item)
         self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"), reply_markup=cancel)
         # Wait for an answer
-        photo_list = self.__wait_for_photo(cancellable=True)
+        payment_photo = self.__wait_for_photo(cancellable=False)
 
-        if isinstance(photo_list, list):
-            # Find the largest photo id
-            largest_photo = photo_list[0]
-            for photo in photo_list[1:]:
-                if photo.width > largest_photo.width:
-                    largest_photo = photo
-            # Get the file object associated with the photo
-            photo_file = self.bot.get_file(largest_photo.file_id)
-            # Notify the user that the bot is downloading the image and might be inactive for a while
-            self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
-            self.bot.send_chat_action(self.chat.id, action="upload_photo")
-            # Set the image for that product
-            order.set_image(photo_file)
+        
+        # Get the file object associated with the photo
+        photo_file = self.bot.get_file(payment_photo.file_id)
+        # Notify the user that the bot is downloading the image and might be inactive for a while
+        self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
+        self.bot.send_chat_action(self.chat.id, action="upload_photo")
+        # Set the image for that product
+        order.set_image(photo_file)
         # Commit the session changes
         self.session.commit()
     

@@ -2,7 +2,7 @@
 # Can be edited, but DON'T REMOVE THE REPLACEMENT FIELDS (words surrounded by {curly braces})
 
 # Currency symbol
-currency_symbol = "€"
+currency_symbol = "﷼"
 
 # Positioning of the currency symbol
 currency_format_string = "{symbol} {value}"

@@ -601,7 +601,7 @@ class Worker(threading.Thread):
 
         
         # Get the file object associated with the photo
-        photo_file = self.bot.get_file(payment_photo.file_id)
+        photo_file = self.bot.get_file(payment_photo[0].file_id)
         # Notify the user that the bot is downloading the image and might be inactive for a while
         self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
         self.bot.send_chat_action(self.chat.id, action="upload_photo")

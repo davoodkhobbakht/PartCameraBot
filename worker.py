@@ -935,50 +935,50 @@ class Worker(threading.Thread):
                 self.bot.edit_message_text(self.chat.id, self.loc.get("error_order_already_cleared"))
                 break
             # If the user pressed the complete order button, complete the order
-            if update.data == "order_complete":
+            #if update.data == "order_complete":
                 # Mark the order as complete
-                order.delivery_date = datetime.datetime.now()
-                # Commit the transaction
-                self.session.commit()
-                # Update order message
-                self.bot.edit_message_text(order.text(w=self), chat_id=self.chat.id,
-                                           message_id=update.message.message_id)
-                # Notify the user of the completition
-                self.bot.send_message(order.user_id,
-                                      self.loc.get("notification_order_completed",
-                                                   order=order.text(w=self, user=True)))
+            order.delivery_date = datetime.datetime.now()
+            # Commit the transaction
+            self.session.commit()
+            # Update order message
+            self.bot.edit_message_text(order.text(w=self), chat_id=self.chat.id,
+                                        message_id=update.message.message_id)
+            # Notify the user of the completition
+            self.bot.send_message(order.user_id,
+                                    self.loc.get("notification_order_completed",
+                                                order=order.text(w=self, user=True)))
             # If the user pressed the refund order button, refund the order...
-            elif update.data == "order_refund":
-                # Ask for a refund reason
-                reason_msg = self.bot.send_message(self.chat.id, self.loc.get("ask_refund_reason"),
-                                                   reply_markup=cancel_keyboard)
-                # Wait for a reply
-                reply = self.__wait_for_regex("(.*)", cancellable=True)
-                # If the user pressed the cancel button, cancel the refund
-                if isinstance(reply, CancelSignal):
-                    # Delete the message asking for the refund reason
-                    self.bot.delete_message(self.chat.id, reason_msg.message_id)
-                    continue
-                # Mark the order as refunded
-                order.refund_date = datetime.datetime.now()
-                # Save the refund reason
-                order.refund_reason = reply
-                # Refund the credit, reverting the old transaction
-                order.transaction.refunded = True
-                # Update the user's credit
-                order.user.recalculate_credit()
-                # Commit the changes
-                self.session.commit()
-                # Update the order message
-                self.bot.edit_message_text(order.text(w=self),
-                                           chat_id=self.chat.id,
-                                           message_id=update.message.message_id)
-                # Notify the user of the refund
-                self.bot.send_message(order.user_id,
-                                      self.loc.get("notification_order_refunded", order=order.text(w=self,
-                                                                                                   user=True)))
-                # Notify the admin of the refund
-                self.bot.send_message(self.chat.id, self.loc.get("success_order_refunded", order_id=order.order_id))
+            # elif update.data == "order_refund":
+            #     # Ask for a refund reason
+            #     reason_msg = self.bot.send_message(self.chat.id, self.loc.get("ask_refund_reason"),
+            #                                        reply_markup=cancel_keyboard)
+            #     # Wait for a reply
+            #     reply = self.__wait_for_regex("(.*)", cancellable=True)
+            #     # If the user pressed the cancel button, cancel the refund
+            #     if isinstance(reply, CancelSignal):
+            #         # Delete the message asking for the refund reason
+            #         self.bot.delete_message(self.chat.id, reason_msg.message_id)
+            #         continue
+            #     # Mark the order as refunded
+            #     order.refund_date = datetime.datetime.now()
+            #     # Save the refund reason
+            #     order.refund_reason = reply
+            #     # Refund the credit, reverting the old transaction
+            #     order.transaction.refunded = True
+            #     # Update the user's credit
+            #     order.user.recalculate_credit()
+            #     # Commit the changes
+            #     self.session.commit()
+            #     # Update the order message
+            #     self.bot.edit_message_text(order.text(w=self),
+            #                                chat_id=self.chat.id,
+            #                                message_id=update.message.message_id)
+            #     # Notify the user of the refund
+            #     self.bot.send_message(order.user_id,
+            #                           self.loc.get("notification_order_refunded", order=order.text(w=self,
+            #                                                                                        user=True)))
+            #     # Notify the admin of the refund
+            #     self.bot.send_message(self.chat.id, self.loc.get("success_order_refunded", order_id=order.order_id))
 
    
     def __help_menu(self):

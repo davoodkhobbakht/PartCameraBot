@@ -253,6 +253,11 @@ class Order(TableDeclarativeBase):
     def __repr__(self):
         return f"<Order {self.order_id} placed by User {self.user_id}>"
 
+    def send_as_message(self, w: "worker.Worker", chat_id: int ,user = False) -> dict:
+        """Send a message containing the product data."""
+        msg = w.bot.send_photo(chat_id, self.payment_image, caption=self.text(w , user))
+        return msg.to_dict()
+    
     def text(self, w: "worker.Worker", user=False):
         items = ""
         for item in self.items:
@@ -267,6 +272,7 @@ class Order(TableDeclarativeBase):
             status_emoji = w.loc.get("emoji_not_processed")
             status_text = w.loc.get("text_not_processed")
         if user and w.cfg["Appearance"]["full_order_info"] == "no":
+            
             return w.loc.get("user_order_format_string",
                              status_emoji=status_emoji,
                              status_text=status_text,

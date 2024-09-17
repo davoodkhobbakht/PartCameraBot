@@ -464,6 +464,7 @@ class Worker(threading.Thread):
                                               message_id=message['message_id'],
                                               caption=product.text(w=self),
                                               reply_markup=inline_keyboard)
+                
         # Create the keyboard with the cancel button
         inline_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_cancel"),
                                                                                         callback_data="cart_cancel")]])
@@ -648,7 +649,9 @@ class Worker(threading.Thread):
 
     def __order_notify_admins(self, order):
         # Notify the user of the order result
-        self.bot.send_message(self.chat.id,self.loc.get("success_order_created" ,order=order.text(w=self,user=True)) )
+        order.send_as_message(w=self ,chat_id = self.chat.id ,user=True,)
+        
+        self.bot.send_message(self.chat.id,self.loc.get("success_order_created"))
         
         # Notify the admins (in Live Orders mode) of the new order
         admins = self.session.query(db.Admin).filter_by(live_mode=True).all()

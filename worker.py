@@ -664,7 +664,7 @@ class Worker(threading.Thread):
         # Notify them of the new placed order
         for admin in admins:
 
-            self.bot.send_photo(admin.user_id, self.payment_image, caption=self.loc.get('notification_order_placed',
+            self.bot.send_photo(admin.user_id, order.payment_image, caption=self.loc.get('notification_order_placed',
                                                order=order.text(w=self)))
 
     def __order_status(self):

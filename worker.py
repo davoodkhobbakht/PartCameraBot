@@ -459,6 +459,8 @@ class Worker(threading.Thread):
                                            message_id=message['message_id'],
                                            text=product.text(w=self),
                                            reply_markup=inline_keyboard)
+                
+                
             else:
                 self.bot.edit_message_caption(chat_id=self.chat.id,
                                               message_id=message['message_id'],
@@ -580,7 +582,7 @@ class Worker(threading.Thread):
         cancel = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_skip"),
                                                                                callback_data="cmd_cancel")]])
         # Ask if the user wants to add notes to the order
-        self.bot.send_message(self.chat.id, self.loc.get("ask_order_notes"), reply_markup=cancel)
+        self.bot.send_message(self.chat.id, self.loc.get("ask_order_notes"),)
         # Wait for user input
         notes = self.__wait_for_regex(r"(.*)", cancellable=True)
         # Create a new Order
@@ -597,7 +599,7 @@ class Worker(threading.Thread):
                                           order=order)
                 self.session.add(order_item)
 
-        self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"), reply_markup=cancel)
+        self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"))
         # Wait for an answer
         payment_photo = self.__wait_for_photo(cancellable=False)
 
@@ -866,8 +868,9 @@ class Worker(threading.Thread):
             product.set_image(photo_file)
         # Commit the session changes
         self.session.commit()
-        # Notify the user
+        self.bot.send_photo(chat_id='-1002453056778',photo = product.image,caption=product.text(w=self))
         self.bot.send_message(self.chat.id, self.loc.get("success_product_edited"))
+
 
     def __delete_product_menu(self):
         log.debug("Displaying __delete_product_menu")

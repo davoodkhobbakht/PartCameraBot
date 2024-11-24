@@ -761,7 +761,7 @@ class Worker(threading.Thread):
     def ask_user_info(self):
         # Ask for user's name
         self.bot.send_message(self.chat.id, "👤 لطفا نام خود را وارد کنید:")
-        name = self.__wait_for_regex(r".+", cancellable=True)
+        name = self.__wait_for_regex(r"(.*)", cancellable=True)
 
         # Ask for birth date
         self.bot.send_message(self.chat.id, "📅 لطفا تاریخ تولد خود را وارد کنید (مثلا 1400/01/01):")

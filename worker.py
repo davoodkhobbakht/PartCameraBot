@@ -462,6 +462,7 @@ class Worker(threading.Thread):
         
         # Step 3: Generate and send PDF
         self.bot.send_message(self.chat.id, "📄 در حال پردازش سفارش شما...")
+        self.collect_order()
         pdf_path = self.__generate_text_pdf(custom_text, font_choice)
         self.bot.send_document(self.chat.id, open(pdf_path, "rb"))
         
@@ -792,7 +793,6 @@ class Worker(threading.Thread):
 
         return {"shape": shape, "length": length, "width": width}
 
-
     def ask_color_details(self):
         # Inline keyboard for shape selection
         shape_keyboard = telegram.InlineKeyboardMarkup([
@@ -813,9 +813,7 @@ class Worker(threading.Thread):
         width = self.__wait_for_regex(r"\d+", cancellable=True)
 
         return {"shape": shape, "length": length, "width": width}
-
-
-
+    
     def ask_delivery_options(self):
         # Inline keyboard for delivery method
         delivery_keyboard = telegram.InlineKeyboardMarkup([
@@ -827,6 +825,7 @@ class Worker(threading.Thread):
         delivery_method = delivery_callback.data
 
         return {"delivery_method": delivery_method}
+    
     def ask_background_color(self):
         # Inline keyboard for background color selection (based on the form)
         color_keyboard = telegram.InlineKeyboardMarkup([
@@ -849,7 +848,6 @@ class Worker(threading.Thread):
         
         return color_mapping[color]
 
-
     def ask_hanger_option(self):
         # Inline keyboard for hanger selection
         hanger_keyboard = telegram.InlineKeyboardMarkup([
@@ -863,7 +861,6 @@ class Worker(threading.Thread):
         # Wait for user response
         hanger_callback = self.__wait_for_inlinekeyboard_callback()
         return "بله" if hanger_callback.data == "hanger_yes" else "خیر"
-
 
     def ask_border_option(self):
         # Inline keyboard for border selection
@@ -912,6 +909,7 @@ class Worker(threading.Thread):
         }
 
         return neon_color_mapping[neon_color]
+    
     def ask_flash_and_adapter(self):
         # Inline keyboard for flasher and adapter options
         flash_adapter_keyboard = telegram.InlineKeyboardMarkup([
@@ -941,7 +939,6 @@ class Worker(threading.Thread):
         }
 
         return flash_adapter_mapping[flash_or_adapter]
-
 
     def collect_order(self):
         # Personal Info

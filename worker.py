@@ -764,8 +764,8 @@ class Worker(threading.Thread):
         name = self.__wait_for_regex(r"(.*)", cancellable=True)
 
         # Ask for birth date
-        self.bot.send_message(self.chat.id, "📅 لطفا تاریخ تولد خود را وارد کنید (مثلا 1400/01/01):")
-        birth_date = self.__wait_for_regex(r"\d{4}/\d{2}/\d{2}", cancellable=True)
+        self.bot.send_message(self.chat.id, "📅 کد ملی خود را وارد کنید")
+        birth_date = self.__wait_for_regex(r"\d{10}", cancellable=True)
 
         # Ask for contact information
         self.bot.send_message(self.chat.id, "📞 شماره تماس خود را وارد کنید:")

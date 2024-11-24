@@ -995,7 +995,12 @@ class Worker(threading.Thread):
         self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید.")
 
         # Wait for user confirmation
-        confirmation = self.__wait_for_regex(r"(تایید|لغو)", cancellable=True)
+        confirmation_keyboard = telegram.InlineKeyboardMarkup([
+            [telegram.InlineKeyboardButton("تایید", callback_data="hanger_yes"),
+            telegram.InlineKeyboardButton("لغو", callback_data="hanger_no")]
+        ])
+
+        confirmation = self.__wait_for_regex(r"(تایید|لغو)", cancellable=True ,reply_markup = confirmation_keyboard )
 
         if confirmation == "تایید":
             # Redirect to payment
@@ -1018,7 +1023,7 @@ class Worker(threading.Thread):
 
             # Commit the session changes
             self.session.commit()
-            self.__order_transaction(order=order, value=-int(self.__get_cart_value(cart)))
+            self.__order_transaction(order=order, value=-int(0))
 
             
         else:

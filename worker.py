@@ -432,6 +432,117 @@ class Worker(threading.Thread):
                 # Go to the Help menu
                 self.__help_menu()
 
+
+    def __text_order_process(self):
+        """Handle the text order process."""
+        # Step 1: Ask for custom text
+        self.bot.send_message(
+            self.chat.id,
+            "📝 لطفاً متن مورد نظر خود را برای تابلو نئون وارد کنید:"
+        )
+        custom_text = self.__wait_for_regex(r"(.+)", cancellable=True)
+        
+        if isinstance(custom_text, CancelSignal):
+            self.bot.send_message(self.chat.id, "❌ سفارش لغو شد.")
+            return
+        
+        # Step 2: Ask for font
+        font_keyboard = telegram.InlineKeyboardMarkup([
+            [telegram.InlineKeyboardButton("فونت ۱", callback_data="font1")],
+            [telegram.InlineKeyboardButton("ب تیتر دو خط", callback_data="font2")],
+            [telegram.InlineKeyboardButton("فونت ۳", callback_data="font3")],
+        ])
+        self.bot.send_message(
+            self.chat.id,
+            "🔤 لطفاً فونت مورد نظر خود را انتخاب کنید:",
+            reply_markup=font_keyboard
+        )
+        font_callback = self.__wait_for_inlinekeyboard_callback()
+        font_choice = font_callback.data
+        
+        # Step 3: Generate and send PDF
+        self.bot.send_message(self.chat.id, "📄 در حال پردازش سفارش شما...")
+        pdf_path = self.__generate_text_pdf(custom_text, font_choice)
+        self.bot.send_document(self.chat.id, open(pdf_path, "rb"))
+        
+        
+        order = db.Order(
+            user=self.user,
+            creation_date=datetime.datetime.now(),
+            notes=f"سفارش متن: {custom_text}",
+        )
+        self.session.add(order)
+        self.session.commit()
+        # Step 4: Notify admins
+        admin_ids = self.session.query(db.Admin.user_id).all()
+        for admin_id in admin_ids:
+            self.bot.send_document(admin_id[0], open(pdf_path, "rb"))
+        
+        self.bot.send_message(self.chat.id, "✅ سفارش شما ثبت شد و به مدیران ارسال گردید.")
+
+
+    '''
+    from reportlab.pdfgen import canvas
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfbase import pdfmetrics
+    from bidi.algorithm import get_display
+    import arabic_reshaper
+
+    def __generate_text_pdf(text, font_choice, font_size=18, page_size=(595.27, 841.89)):
+        """
+        Create a PDF file with Farsi text.
+
+        :param output_path: Path to save the PDF
+        :param text: Farsi text to render
+        :param font_path: Path to a TTF font that supports Farsi
+        :param font_name: Name to register the custom font
+        :param font_size: Font size for the text
+        :param page_size: Page size (default is A4)
+        """
+        # Register the Farsi font
+        font_name = font_choice
+        font_path = {
+            "font2": "fonts/BTitrBd.ttf",
+        }.get(font_choice, "onts/BTitrBd.ttf")
+        pdfmetrics.registerFont(TTFont(font_name, font_path))
+        output_path = f"/tmp/text_order_{uuid.uuid4().hex}.pdf"
+        # Create a PDF canvas
+        pdf = canvas.Canvas(output_path, pagesize=page_size)
+        
+        # Prepare the Farsi text
+        reshaped_text = arabic_reshaper.reshape(text)
+        bidi_text = get_display(reshaped_text)
+        
+        # Set the font and size
+        pdf.setFont(font_name, font_size)
+        
+        # Write text to the PDF (centered)
+        pdf.drawCentredString(page_size[0] / 2, page_size[1] / 2, bidi_text)
+        
+        # Save the PDF
+        pdf.save()
+        print(f"PDF file saved at: {output_path}")
+        return output_path
+    '''
+
+    def __order_type_selection(self):
+        """Ask user whether they want to order a product or a custom text."""
+        # Inline keyboard for selecting order type
+        order_type_keyboard = telegram.InlineKeyboardMarkup([
+            [telegram.InlineKeyboardButton("📦 انتخاب از محصولات", callback_data="order_product")],
+            [telegram.InlineKeyboardButton("📝 سفارش متن", callback_data="order_text")],
+        ])
+        self.bot.send_message(
+            self.chat.id,
+            "لطفاً نوع سفارش خود را انتخاب کنید:",
+            reply_markup=order_type_keyboard
+        )
+        # Wait for user selection
+        order_type_callback = self.__wait_for_inlinekeyboard_callback()
+        return order_type_callback.data
+    
+
+
     def __order_menu(self):
         """User menu to order products from the shop."""
         log.debug("Displaying __order_menu")

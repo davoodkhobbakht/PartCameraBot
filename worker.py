@@ -992,15 +992,15 @@ class Worker(threading.Thread):
             f"💡 فلاشر و آداپتور: {order['flash_adapter']}\n"
             f"🚚 روش ارسال: {order['delivery_method']}"
         )
-        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید.")
+        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup = confirmation_keyboard )
 
         # Wait for user confirmation
         confirmation_keyboard = telegram.InlineKeyboardMarkup([
             [telegram.InlineKeyboardButton("تایید", callback_data="hanger_yes"),
             telegram.InlineKeyboardButton("لغو", callback_data="hanger_no")]
         ])
-
-        confirmation = self.__wait_for_regex(r"(تایید|لغو)", cancellable=True ,reply_markup = confirmation_keyboard )
+        
+        confirmation = self.__wait_for_regex(r"(تایید|لغو)", cancellable=True )
 
         if confirmation == "تایید":
             # Redirect to payment

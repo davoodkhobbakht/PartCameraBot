@@ -159,6 +159,11 @@ class Worker(threading.Thread):
 
         return Price
 
+    def __create_localization(self):
+        # Check if the user's language is enabled; if it isn't, change it to the default
+        if self.user.language not in self.cfg["Language"]["enabled_languages"]:
+            log.debug(f"User's language '{self.user.language}' is not enabled, changing it to the default")
+            
     def run(self):
         """The conversation code."""
         log.debug("Starting conversation")

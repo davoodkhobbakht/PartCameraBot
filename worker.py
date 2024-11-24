@@ -309,8 +309,9 @@ class Worker(threading.Thread):
             # Ensure there is a match
             if match is None:
                 continue
-            # Return the first capture group
-            return match.group(1)
+            # Return the first capture group if it exists; otherwise, the entire match
+            return match.group(1) if match.lastindex else match.group(0)
+
 
     def __wait_for_photo(self, cancellable: bool = False) -> Union[List[telegram.PhotoSize], CancelSignal]:
         """Continue getting updates until a photo is received, then return it."""

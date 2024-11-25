@@ -1027,7 +1027,7 @@ class Worker(threading.Thread):
         ])
         
 
-        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." )
+        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup= confirmation_keyboard)
         #this is where i want to use the __generate_text_image
         '''generated_image_path = self.__generate_text_image(
             text="Custom Neon Text",  # Use a placeholder for text or ask user for custom text

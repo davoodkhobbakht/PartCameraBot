@@ -13,7 +13,9 @@ from typing import *
 import requests
 import sqlalchemy
 import telegram
+from PIL import Image, ImageDraw, ImageFont
 
+from fpdf import FPDF
 import database as db
 import localization
 import nuconfig
@@ -483,7 +485,6 @@ class Worker(threading.Thread):
         self.bot.send_message(self.chat.id, "✅ سفارش شما ثبت شد و به مدیران ارسال گردید.")
 
 
-    from fpdf import FPDF
     def __generate_text_pdf(self, text, font_choice):
         """Generate a PDF file for the custom text order."""
         pdf = FPDF()
@@ -923,16 +924,16 @@ class Worker(threading.Thread):
 
 
 
-    from PIL import Image, ImageDraw, ImageFont
+
 
     def __generate_text_image(self, text, font_choice, background_color, neon_color, shape, length, width):
         """Generate a PNG image for the custom text order with shape and colors."""
         # Set up the font path based on the user's choice
         font_path = {
-            "font1": "fonts/Font1.ttf",
-            "font2": "fonts/Font2.ttf",
+            "font1": "fonts/font1.ttf",
+            "font2": "fonts/BTitrBd.ttf",
             "font3": "fonts/Font3.ttf",
-        }.get(font_choice, "fonts/Font1.ttf")
+        }.get(font_choice, "fonts/BTitrBd.ttf")
         font = ImageFont.truetype(font_path, size=48)  # You can adjust size based on `length` and `width`
         
         # Create a blank image with the background color

@@ -483,49 +483,29 @@ class Worker(threading.Thread):
         self.bot.send_message(self.chat.id, "✅ سفارش شما ثبت شد و به مدیران ارسال گردید.")
 
 
-    '''
-    from reportlab.pdfgen import canvas
-    from reportlab.pdfbase.ttfonts import TTFont
-    from reportlab.pdfbase import pdfmetrics
-    from bidi.algorithm import get_display
-    import arabic_reshaper
-
-    def __generate_text_pdf(text, font_choice, font_size=18, page_size=(595.27, 841.89)):
-        """
-        Create a PDF file with Farsi text.
-
-        :param output_path: Path to save the PDF
-        :param text: Farsi text to render
-        :param font_path: Path to a TTF font that supports Farsi
-        :param font_name: Name to register the custom font
-        :param font_size: Font size for the text
-        :param page_size: Page size (default is A4)
-        """
-        # Register the Farsi font
-        font_name = font_choice
+    from fpdf import FPDF
+    def __generate_text_pdf(self, text, font_choice):
+        """Generate a PDF file for the custom text order."""
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # Add Persian font support if necessary
         font_path = {
+            "font1": "fonts/Font1.ttf",
             "font2": "fonts/BTitrBd.ttf",
-        }.get(font_choice, "onts/BTitrBd.ttf")
-        pdfmetrics.registerFont(TTFont(font_name, font_path))
-        output_path = f"/tmp/text_order_{uuid.uuid4().hex}.pdf"
-        # Create a PDF canvas
-        pdf = canvas.Canvas(output_path, pagesize=page_size)
+            "font3": "fonts/Font3.ttf",
+        }.get(font_choice, "fonts/Font1.ttf")
+        pdf.add_font('CustomFont', '', font_path, uni=True)
+        pdf.set_font('CustomFont', size=16)
         
-        # Prepare the Farsi text
-        reshaped_text = arabic_reshaper.reshape(text)
-        bidi_text = get_display(reshaped_text)
+        # Add text to PDF
+        pdf.multi_cell(0, 10, text)
         
-        # Set the font and size
-        pdf.setFont(font_name, font_size)
-        
-        # Write text to the PDF (centered)
-        pdf.drawCentredString(page_size[0] / 2, page_size[1] / 2, bidi_text)
-        
-        # Save the PDF
-        pdf.save()
-        print(f"PDF file saved at: {output_path}")
-        return output_path
-    '''
+        # Save PDF
+        pdf_path = f"/tmp/text_order_{uuid.uuid4().hex}.pdf"
+        pdf.output(pdf_path)
+        return pdf_path
+
 
     def __order_type_selection(self):
         """Ask user whether they want to order a product or a custom text."""
@@ -941,6 +921,52 @@ class Worker(threading.Thread):
 
         return flash_adapter_mapping[flash_or_adapter]
 
+
+
+    from PIL import Image, ImageDraw, ImageFont
+
+    def __generate_text_image(self, text, font_choice, background_color, neon_color, shape, length, width):
+        """Generate a PNG image for the custom text order with shape and colors."""
+        # Set up the font path based on the user's choice
+        font_path = {
+            "font1": "fonts/Font1.ttf",
+            "font2": "fonts/Font2.ttf",
+            "font3": "fonts/Font3.ttf",
+        }.get(font_choice, "fonts/Font1.ttf")
+        font = ImageFont.truetype(font_path, size=48)  # You can adjust size based on `length` and `width`
+        
+        # Create a blank image with the background color
+        image = Image.new('RGB', (int(length), int(width)), color=background_color)
+        draw = ImageDraw.Draw(image)
+        
+        # Text size and positioning
+        text_width, text_height = draw.textsize(text, font=font)
+        text_x = (int(length) - text_width) // 2
+        text_y = (int(width) - text_height) // 2
+
+        # Draw shape around the text
+        if shape == "circle":
+            shape_radius = min(int(length), int(width)) // 3  # Adjust size for circle
+            shape_x = (int(length) - shape_radius * 2) // 2
+            shape_y = (int(width) - shape_radius * 2) // 2
+            draw.ellipse([shape_x, shape_y, shape_x + shape_radius * 2, shape_y + shape_radius * 2], fill=neon_color)
+        elif shape == "rectangle":
+            # Rectangle shape as the background
+            draw.rectangle([0, 0, int(length), int(width)], fill=neon_color)
+        
+        # Draw the text
+        draw.text((text_x, text_y), text, fill=neon_color, font=font)
+        
+        # Save the image
+        image_path = f"/tmp/text_order_{uuid.uuid4().hex}.png"
+        image.save(image_path)
+        
+        return image_path
+
+
+
+
+
     def collect_order(self):
         # Personal Info
         user_info = self.ask_user_info()
@@ -994,16 +1020,29 @@ class Worker(threading.Thread):
         )
         # Wait for user confirmation
         confirmation_keyboard = telegram.InlineKeyboardMarkup([
-            [telegram.InlineKeyboardButton("تایید", callback_data="hanger_yes"),
-            telegram.InlineKeyboardButton("لغو", callback_data="hanger_no")]
+            [telegram.InlineKeyboardButton("تایید", callback_data="yes"),
+            telegram.InlineKeyboardButton("لغو", callback_data="no")]
         ])
-        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup = confirmation_keyboard )
+        
 
+        #self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,pho)
+        #this is where i want to use the __generate_text_image
+        generated_image_path = self.__generate_text_image(
+            text="Custom Neon Text",  # Use a placeholder for text or ask user for custom text
+            font_choice="font1",  # Default font, replace with user-selected font
+            background_color=background_color,
+            neon_color=neon_color,
+            shape=order['shape'],  # Circle or rectangle as selected by user
+            length=order['length'],
+            width=order['width']
+        )
+        self.bot.send_photo(self.chat_id,open(generated_image_path, "rb") , caption=f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup= confirmation_keyboard)
+        
+        confirmation = self.__wait_for_inlinekeyboard_callback()
+        confirmation = confirmation.data
         
         
-        confirmation = self.__wait_for_regex(r"(تایید|لغو)", cancellable=True )
-
-        if confirmation == "تایید":
+        if confirmation == "yes":
             # Redirect to payment
             self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"))
             # Wait for an answer

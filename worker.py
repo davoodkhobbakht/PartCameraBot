@@ -465,7 +465,7 @@ class Worker(threading.Thread):
         
         # Step 3: Generate and send PDF
         self.bot.send_message(self.chat.id, "📄 در حال پردازش سفارش شما...")
-        self.collect_order()
+        self.collect_order(custom_text)
         pdf_path = self.__generate_text_pdf(custom_text, font_choice)
         self.bot.send_document(self.chat.id, open(pdf_path, "rb"))
         
@@ -495,7 +495,7 @@ class Worker(threading.Thread):
             "font1": "fonts/Font1.ttf",
             "font2": "fonts/BTitrBd.ttf",
             "font3": "fonts/Font3.ttf",
-        }.get(font_choice, "fonts/Font1.ttf")
+        }.get(font_choice, "fonts/BTitrBd.ttf")
         pdf.add_font('CustomFont', '', font_path, uni=True)
         pdf.set_font('CustomFont', size=16)
         
@@ -968,7 +968,7 @@ class Worker(threading.Thread):
 
 
 
-    def collect_order(self):
+    def collect_order(self,custom_text):
         # Personal Info
         user_info = self.ask_user_info()
 
@@ -1009,6 +1009,7 @@ class Worker(threading.Thread):
         order_summary = (
             f"👤 نام: {order['name']}\n"
             f"📅 تاریخ تولد: {order['birth_date']}\n"
+            f" متن : {custom_text}\n"
             f"📞 شماره تماس: {order['phone']}\n"
             f"📐 شکل تابلو: {order['shape']}\n"
             f"📏 ابعاد: {order['length']}x{order['width']} سانتی‌متر\n"
@@ -1026,9 +1027,9 @@ class Worker(threading.Thread):
         ])
         
 
-        #self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,pho)
+        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." )
         #this is where i want to use the __generate_text_image
-        generated_image_path = self.__generate_text_image(
+        '''generated_image_path = self.__generate_text_image(
             text="Custom Neon Text",  # Use a placeholder for text or ask user for custom text
             font_choice="font1",  # Default font, replace with user-selected font
             background_color=background_color,
@@ -1038,7 +1039,7 @@ class Worker(threading.Thread):
             width=order['width']
         )
         self.bot.send_photo(self.chat_id,open(generated_image_path, "rb") , caption=f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup= confirmation_keyboard)
-        
+        '''
         confirmation = self.__wait_for_inlinekeyboard_callback()
         confirmation = confirmation.data
         

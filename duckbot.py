@@ -125,6 +125,8 @@ def factory(cfg: nuconfig.NuConfig):
         def get_chat_member(self, *args, **kwargs):
             """Wrapper for the get_chat_member method."""
             return self.bot.get_chat_member(*args, **kwargs)
+        def get_username(self, *args, **kwargs):
+            return self.bot.username
         # More methods can be added here
 
     return DuckBot

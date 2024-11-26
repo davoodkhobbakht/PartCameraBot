@@ -1366,7 +1366,7 @@ class Worker(threading.Thread):
             [
                 telegram.InlineKeyboardButton(
                     text="ثبت سفارش از طریق ربات",
-                    url=f"https://t.me/{self.bot.username}?start=add_{product.id}"
+                    url=f"https://t.me/{self.bot.get_username(self)}?start=add_{product.id}"
                 )
             ]
         ])

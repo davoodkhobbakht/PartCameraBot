@@ -121,6 +121,10 @@ def factory(cfg: nuconfig.NuConfig):
         def send_document(self, *args, **kwargs):
             return self.bot.send_document(*args, **kwargs)
 
+        @catch_telegram_errors
+        def get_chat_member(self, *args, **kwargs):
+            """Wrapper for the get_chat_member method."""
+            return self.bot.get_chat_member(*args, **kwargs)
         # More methods can be added here
 
     return DuckBot

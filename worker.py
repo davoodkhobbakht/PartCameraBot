@@ -235,7 +235,7 @@ class Worker(threading.Thread):
         self.__create_localization()
 
          # Handle /start with arguments for Add to Cart
-        start_args = self.chat.__getattribute__('start_args')  # Retrieve /start arguments
+        start_args = self.query.get('start_args', None)  # Retrieve /start arguments
         if start_args and start_args.startswith("add_"):
             product_id = start_args.split("_")[1]
             self.__add_to_cart(product_id)

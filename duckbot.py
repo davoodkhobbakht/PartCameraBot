@@ -63,9 +63,9 @@ def factory(cfg: nuconfig.NuConfig):
             self.bot = telegram.Bot(token=cfg["Telegram"]["token"], *args, **kwargs)
 
         @catch_telegram_errors
-        def send_message(self,parse_mode="HTML", *args, **kwargs):
+        def send_message(self, *args, **kwargs):
             # All messages are sent in HTML parse mode
-            return self.bot.send_message(parse_mode=parse_mode, *args, **kwargs)
+            return self.bot.send_message(parse_mode="HTML", *args, **kwargs)
 
         @catch_telegram_errors
         def send_photo(self, *args, **kwargs):

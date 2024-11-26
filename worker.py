@@ -180,7 +180,6 @@ class Worker(threading.Thread):
         self.bot.send_message(
             self.chat.id,
             f"برای استفاده از ربات، لطفاً ابتدا کانال ما را دنبال کنید: [@{channel_username}](https://t.me/{channel_username})",
-            parse_mode="Markdown",
         )
 
     def __add_to_cart(self, product_id):

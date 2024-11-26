@@ -184,20 +184,54 @@ class Worker(threading.Thread):
 
     def __add_to_cart(self, product_id):
         """Add a product to the user's cart from the channel."""
+        # Query the product from the database
         product = self.session.query(db.Product).filter_by(id=product_id, deleted=False).one_or_none()
         if not product:
             self.bot.send_message(self.chat.id, "❌ محصول موردنظر یافت نشد.")
             return
 
-        # Add product to user's cart (logic depends on your cart implementation)
-        # Example:
-        self.user.cart.add(product)
-        self.session.commit()
+        # Ensure the user's cart is initialized
+        if not hasattr(self, "cart"):
+            self.cart = {}
 
+        # Check if the product is already in the cart
+        if product_id in self.cart:
+            self.cart[product_id][1] += 1  # Increment the quantity
+        else:
+            # Add the product to the cart with quantity 1
+            self.cart[product_id] = [product, 1]
+
+        # Create the inline keyboard for the product in the cart
+        inline_keyboard = telegram.InlineKeyboardMarkup([
+            [
+                telegram.InlineKeyboardButton(self.loc.get("menu_add_to_cart"), callback_data=f"cart_add_{product.id}"),
+                telegram.InlineKeyboardButton(self.loc.get("menu_remove_from_cart"), callback_data=f"cart_remove_{product.id}")
+            ]
+        ])
+
+        # Edit or send a message with the product details and the updated cart information
+        if product.image is None:
+            self.bot.send_message(
+                self.chat.id,
+                product.text(w=self, cart_qty=self.cart[product_id][1]),
+                reply_markup=inline_keyboard
+            )
+        else:
+            self.bot.send_photo(
+                self.chat.id,
+                photo=product.image,
+                caption=product.text(w=self, cart_qty=self.cart[product_id][1]),
+                reply_markup=inline_keyboard
+            )
+
+        # Notify the user
         self.bot.send_message(
             self.chat.id,
-            f"✅ محصول '{product.name}' با موفقیت به سبد خرید شما افزوده شد.",
+            f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
+
+        # Commit changes to the session
+        self.session.commit()
 
 
 

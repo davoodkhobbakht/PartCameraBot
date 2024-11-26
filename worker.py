@@ -166,7 +166,7 @@ class Worker(threading.Thread):
 
     def __is_user_following_channel(self):
         """Check if the user is following the channel."""
-        channel_username = "your_channel_username"
+        channel_username = "lampinoshop"
         try:
             status = self.bot.get_chat_member(f"@{channel_username}", self.chat.id).status
             return status in ["member", "administrator", "creator"]
@@ -176,7 +176,7 @@ class Worker(threading.Thread):
 
     def __recommend_channel(self):
         """Recommend the user to follow the channel."""
-        channel_username = "your_channel_username"
+        channel_username = "lampinoshop"
         self.bot.send_message(
             self.chat.id,
             f"برای استفاده از ربات، لطفاً ابتدا کانال ما را دنبال کنید: [@{channel_username}](https://t.me/{channel_username})",
@@ -237,6 +237,7 @@ class Worker(threading.Thread):
         self.__create_localization()
 
         # Handle Add to Cart via /start arguments
+        log.info(self.start_args)
         if self.start_args:
             if self.start_args.startswith("add_"):
                 product_id = self.start_args.split("_")[1]

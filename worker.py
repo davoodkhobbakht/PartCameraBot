@@ -44,6 +44,7 @@ class Worker(threading.Thread):
                  telegram_user: telegram.User,
                  cfg: nuconfig.NuConfig,
                  engine,
+                 start_args=None,
                  *args,
                  **kwargs):
         # Initialize the thread
@@ -54,6 +55,7 @@ class Worker(threading.Thread):
         self.telegram_user: telegram.User = telegram_user
         self.cfg = cfg
         self.loc = None
+        self.start_args = start_args 
         # Open a new database session
         log.debug(f"Opening new database session for {self.name}")
         self.session = sqlalchemy.orm.sessionmaker(bind=engine)()
@@ -234,12 +236,13 @@ class Worker(threading.Thread):
         # Create the localization object
         self.__create_localization()
 
-         # Handle /start with arguments for Add to Cart
-        start_args = self.bot.chat.get('start_args')  # Retrieve /start arguments
-        if start_args and start_args.startswith("add_"):
-            product_id = start_args.split("_")[1]
-            self.__add_to_cart(product_id)
-            return  # End the process after handling Add to Cart
+        # Handle Add to Cart via /start arguments
+        if self.start_args:
+            if self.start_args.startswith("add_"):
+                product_id = self.start_args.split("_")[1]
+                self.__add_to_cart(product_id)
+                return  # End the process after handling Add to Cart
+
 
         # Check if the user is following the channel
         if not self.__is_user_following_channel():

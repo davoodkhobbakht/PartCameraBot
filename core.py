@@ -140,6 +140,13 @@ def main():
                 # If the message is a start command...
                 if isinstance(update.message.text, str) and update.message.text.startswith("/start"):
                     log.info(f"Received /start from: {update.message.chat.id}")
+                    
+                    
+                    # Extract arguments from /start (e.g., add_<product_id>)
+                    start_args = update.message.text.split(' ', 1)[1] if ' ' in update.message.text else None
+
+
+
                     # Check if a worker already exists for that chat
                     old_worker = chat_workers.get(update.message.chat.id)
                     # If it exists, gracefully stop the worker
@@ -152,10 +159,12 @@ def main():
                                                telegram_user=update.message.from_user,
                                                cfg=user_cfg,
                                                engine=engine,
+                                               start_args=start_args,
                                                daemon=True)
                     # Start the worker
                     log.debug(f"Starting {new_worker.name}")
                     new_worker.start()
+                    
                     # Store the worker in the dictionary
                     chat_workers[update.message.chat.id] = new_worker
                     # Skip the update

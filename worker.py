@@ -163,7 +163,6 @@ class Worker(threading.Thread):
 
         return Price
 
-
     def __is_user_following_channel(self):
         """Check if the user is following the channel."""
         channel_username = "lampinoshop"
@@ -181,51 +180,14 @@ class Worker(threading.Thread):
             self.chat.id,
             f"برای استفاده از ربات، لطفاً ابتدا کانال ما را دنبال کنید: [@{channel_username}](https://t.me/{channel_username})",
         )
-    
-    def __collect_info(self):
-        # Personal Info
-        user_info = self.ask_user_info()
-
-        # Board Details
-        board_details = self.ask_board_details()
-
-        # Background Color
-        background_color = self.ask_background_color()
-
-        # Neon Color
-        neon_color = self.ask_neon_color()
-
-        # Hanger Option
-        hanger_option = self.ask_hanger_option()
-
-        # Border Option
-        border_option = self.ask_border_option()
-
-        # Flash and Adapter Options
-        flash_option = self.ask_flash_and_adapter()
-
-        # Delivery Options
-        delivery_options = self.ask_delivery_options()
-
-        # Combine all information
-        order = {
-            **user_info,
-            **board_details,
-            "background_color": background_color,
-            "neon_color": neon_color,
-            "hanger": hanger_option,
-            "border": border_option,
-            "flash_adapter": flash_option,
-            **delivery_options
-        }
-        return order
-
-
+        return
+  
     def __add_to_cart(self, product_id):
+        
         """Add a product to the user's cart from the channel."""
         # Query the product from the database
-        product = self.session.query(db.Product).filter_by(id=product_id, deleted=False).one_or_none()
-        if not product:
+        p = self.session.query(db.Product).filter_by(id=product_id, deleted=False).one_or_none()
+        if not p:
             self.bot.send_message(self.chat.id, "❌ محصول موردنظر یافت نشد.")
             return
 
@@ -233,7 +195,7 @@ class Worker(threading.Thread):
         if not hasattr(self, "cart"):
             self.cart = {}
 
-        # Check if the product is already in the cart
+        # Check if the p is already in the cart
         if product_id in self.cart:
             self.cart[product_id][1] += 1  # Increment the quantity
         else:
@@ -383,11 +345,9 @@ class Worker(threading.Thread):
             self.chat.id,
             f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
-        order = __collect_info(self)
+        order = self.__collect_info(self)
         # Commit changes to the session
         self.session.commit()
-
-
 
     def run(self):
         """The conversation code."""
@@ -555,7 +515,6 @@ class Worker(threading.Thread):
                 continue
             # Return the first capture group if it exists; otherwise, the entire match
             return match.group(1) if match.lastindex else match.group(0)
-
 
     def __wait_for_photo(self, cancellable: bool = False) -> Union[List[telegram.PhotoSize], CancelSignal]:
         """Continue getting updates until a photo is received, then return it."""
@@ -766,6 +725,45 @@ class Worker(threading.Thread):
         order_type_callback = self.__wait_for_inlinekeyboard_callback()
         return order_type_callback.data
     
+
+
+    def __collect_info(self):
+        # Personal Info
+        user_info = self.ask_user_info()
+
+        # Board Details
+        board_details = self.ask_board_details()
+
+        # Background Color
+        background_color = self.ask_background_color()
+
+        # Neon Color
+        neon_color = self.ask_neon_color()
+
+        # Hanger Option
+        hanger_option = self.ask_hanger_option()
+
+        # Border Option
+        border_option = self.ask_border_option()
+
+        # Flash and Adapter Options
+        flash_option = self.ask_flash_and_adapter()
+
+        # Delivery Options
+        delivery_options = self.ask_delivery_options()
+
+        # Combine all information
+        order = {
+            **user_info,
+            **board_details,
+            "background_color": background_color,
+            "neon_color": neon_color,
+            "hanger": hanger_option,
+            "border": border_option,
+            "flash_adapter": flash_option,
+            **delivery_options
+        }
+        return order
 
 
     def __order_menu(self):
@@ -1208,48 +1206,9 @@ class Worker(threading.Thread):
 
 
 
-    def __collect_info(self):
-        # Personal Info
-        user_info = self.ask_user_info()
-
-        # Board Details
-        board_details = self.ask_board_details()
-
-        # Background Color
-        background_color = self.ask_background_color()
-
-        # Neon Color
-        neon_color = self.ask_neon_color()
-
-        # Hanger Option
-        hanger_option = self.ask_hanger_option()
-
-        # Border Option
-        border_option = self.ask_border_option()
-
-        # Flash and Adapter Options
-        flash_option = self.ask_flash_and_adapter()
-
-        # Delivery Options
-        delivery_options = self.ask_delivery_options()
-
-        # Combine all information
-        order = {
-            **user_info,
-            **board_details,
-            "background_color": background_color,
-            "neon_color": neon_color,
-            "hanger": hanger_option,
-            "border": border_option,
-            "flash_adapter": flash_option,
-            **delivery_options
-        }
-        return order
-
-
     def collect_order(self,custom_text = None):
        
-        order = __collect_info(self)
+        order = self.__collect_info(self)
 
         # Confirm order
         order_summary = (

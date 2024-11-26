@@ -345,7 +345,7 @@ class Worker(threading.Thread):
             self.chat.id,
             f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
-        order = self.__collect_info(self)
+        order = self.__collect_info()
         # Commit changes to the session
         self.session.commit()
 
@@ -1208,7 +1208,7 @@ class Worker(threading.Thread):
 
     def collect_order(self,custom_text = None):
        
-        order = self.__collect_info(self)
+        order = self.__collect_info()
 
         # Confirm order
         order_summary = (

@@ -161,6 +161,45 @@ class Worker(threading.Thread):
 
         return Price
 
+
+    def __is_user_following_channel(self):
+        """Check if the user is following the channel."""
+        channel_username = "your_channel_username"
+        try:
+            status = self.bot.get_chat_member(f"@{channel_username}", self.chat.id).status
+            return status in ["member", "administrator", "creator"]
+        except telegram.error.BadRequest:
+            # User may not exist or bot isn't an admin in the channel
+            return False
+
+    def __recommend_channel(self):
+        """Recommend the user to follow the channel."""
+        channel_username = "your_channel_username"
+        self.bot.send_message(
+            self.chat.id,
+            f"برای استفاده از ربات، لطفاً ابتدا کانال ما را دنبال کنید: [@{channel_username}](https://t.me/{channel_username})",
+            parse_mode="Markdown",
+        )
+
+    def __add_to_cart(self, product_id):
+        """Add a product to the user's cart from the channel."""
+        product = self.session.query(db.Product).filter_by(id=product_id, deleted=False).one_or_none()
+        if not product:
+            self.bot.send_message(self.chat.id, "❌ محصول موردنظر یافت نشد.")
+            return
+
+        # Add product to user's cart (logic depends on your cart implementation)
+        # Example:
+        self.user.cart.add(product)
+        self.session.commit()
+
+        self.bot.send_message(
+            self.chat.id,
+            f"✅ محصول '{product.name}' با موفقیت به سبد خرید شما افزوده شد.",
+        )
+
+
+
     def run(self):
         """The conversation code."""
         log.debug("Starting conversation")
@@ -194,6 +233,18 @@ class Worker(threading.Thread):
                 log.warning(f"User was auto-promoted to Admin as no other admins existed: {self.user}")
         # Create the localization object
         self.__create_localization()
+
+         # Handle /start with arguments for Add to Cart
+        start_args = self.chat.get('start_args', None)  # Retrieve /start arguments
+        if start_args and start_args.startswith("add_"):
+            product_id = start_args.split("_")[1]
+            self.__add_to_cart(product_id)
+            return  # End the process after handling Add to Cart
+
+        # Check if the user is following the channel
+        if not self.__is_user_following_channel():
+            self.__recommend_channel()
+            return  # End process if user isn't following the channel
         # Capture exceptions that occour during the conversation
         # noinspection PyBroadException
         try:
@@ -1307,7 +1358,24 @@ class Worker(threading.Thread):
             product.set_image(photo_file)
         # Commit the session changes
         self.session.commit()
-        self.bot.send_photo(chat_id='-1002453056778',photo = product.image,caption=product.text(w=self))
+            # Create the inline keyboard for adding to cart
+        channel_keyboard = telegram.InlineKeyboardMarkup([
+            [
+                telegram.InlineKeyboardButton(
+                    text="ثبت سفارش از طریق ربات",
+                    url=f"https://t.me/{self.bot.username}?start=add_{product.id}"
+                )
+            ]
+        ])
+
+        # Send the product to the channel with the inline keyboard
+        self.bot.send_photo(
+            chat_id='-1001569827046',
+            photo=product.image,
+            caption=product.text(w=self),
+            reply_markup=channel_keyboard
+        )
+                
         self.bot.send_message(self.chat.id, self.loc.get("success_product_edited"))
 
 

@@ -99,7 +99,7 @@ class Worker(threading.Thread):
                 return worker.loc.get(
                     "currency_format_string",
                     symbol=worker.cfg["Payments"]["currency_symbol"],
-                    value="{0:.2f}".format(self.value / (10 ** worker.cfg["Payments"]["currency_exp"]))
+                    value="{0:.0f}".format(self.value / (10 ** worker.cfg["Payments"]["currency_exp"]))
                 )
 
             def __int__(self):

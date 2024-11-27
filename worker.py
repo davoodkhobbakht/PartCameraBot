@@ -670,7 +670,7 @@ class Worker(threading.Thread):
         
         #mamad ramzi
 
-
+        print('befor generate')
         text_png_path = self.__generate_text_image( custom_text,'danstevis' if font_choice =='danstevis_2' else font_choice ,
                                                    background_color= 'white' if order_info['background_color'] == 'سفید' else 'black',
                                                    neon_colors= order_info['neon_colors'].values(), shape=order_info['board_details']['shape'],
@@ -768,13 +768,13 @@ class Worker(threading.Thread):
 
         output_path =f"text_order_{uuid.uuid4().hex}.jpg"
         url = "https://doiti.ir/mmd.php"
-
+        print(url)
         payload = json.dumps({
         "parameters": {
             "text":text,
             "font": font_choice,
             "shadowColors": [neon_color[1] for neon_color in neon_colors],
-            "outputPath":  'home/doitiir/Lamponobot/tmp'+output_path,
+            "outputPath":  '/home/doitiir/Lamponobot/tmp'+output_path,
             "shape": "border" if border == 'بله' else shape,
             "single_line": single_line,
             "background_color":background_color

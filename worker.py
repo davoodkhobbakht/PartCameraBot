@@ -1371,8 +1371,8 @@ class Worker(threading.Thread):
             f"📍 آدرس: {order['delivery']['address']}\n"
         )
 
-    if custom_text:
-        order_summary += f"📝 متن سفارشی: {custom_text}\n"
+        if custom_text:
+            order_summary += f"📝 متن سفارشی: {custom_text}\n"
         # Wait for user confirmation
         confirmation_keyboard = telegram.InlineKeyboardMarkup([
             [telegram.InlineKeyboardButton("تایید", callback_data="yes"),

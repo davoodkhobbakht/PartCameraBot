@@ -346,6 +346,21 @@ class Worker(threading.Thread):
             f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
         order = self.__collect_info()
+         # Confirm order
+        order_summary = (
+            f"👤 نام: {order['name']}\n"
+            f"📅 تاریخ تولد: {order['birth_date']}\n"
+            f" محصول : {product.name}\n" 
+            f"📞 شماره تماس: {order['phone']}\n"
+            f"📐 شکل تابلو: {order['shape']}\n"
+            f"📏 ابعاد: {order['length']}x{order['width']} سانتی‌متر\n"
+            f"🎨 رنگ پس‌زمینه: {order['background_color']}\n"
+            f"💡 رنگ نئون: {order['neon_color']}\n"
+            f"🪝 جا آویز: {order['hanger']}\n"
+            f"🖌️ دورگیری: {order['border']}\n"
+            f"💡 فلاشر و آداپتور: {order['flash_adapter']}\n"
+            f"🚚 روش ارسال: {order['delivery_method']}"
+        )
         # Commit changes to the session
         self.session.commit()
 
@@ -921,9 +936,24 @@ class Worker(threading.Thread):
         cancel = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_skip"),
                                                                                callback_data="cmd_cancel")]])
         # Ask if the user wants to add notes to the order
-        self.bot.send_message(self.chat.id, self.loc.get("ask_order_notes"),)
+        summery =  self.__collect_info()
+        order_summary = (
+            f"👤 نام: {summery['name']}\n"
+            f"📅 تاریخ تولد: {summery['birth_date']}\n"
+            f" محصول : {product.name}\n" 
+            f"📞 شماره تماس: {summery['phone']}\n"
+            f"📐 شکل تابلو: {summery['shape']}\n"
+            f"📏 ابعاد: {summery['length']}x{summery['width']} سانتی‌متر\n"
+            f"🎨 رنگ پس‌زمینه: {summery['background_color']}\n"
+            f"💡 رنگ نئون: {summery['neon_color']}\n"
+            f"🪝 جا آویز: {summery['hanger']}\n"
+            f"🖌️ دورگیری: {summery['border']}\n"
+            f"💡 فلاشر و آداپتور: {summery['flash_adapter']}\n"
+            f"🚚 روش ارسال: {summery['delivery_method']}"
+        )
+        
         # Wait for user input
-        notes = self.__wait_for_regex(r"(.*)", cancellable=True)
+        notes = order_summary
         # Create a new Order
         order = db.Order(user=self.user,
                          creation_date=datetime.datetime.now(),
@@ -975,9 +1005,6 @@ class Worker(threading.Thread):
         for product in cart:
             value += cart[product][0].price * cart[product][1]
         return value
-
-
-
 
 
     def ask_user_info(self):

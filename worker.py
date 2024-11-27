@@ -1263,7 +1263,7 @@ class Worker(threading.Thread):
                     self.bot.send_message(self.chat.id, "❌ حداکثر ۳ رنگ می‌توانید انتخاب کنید.")
 
         # Return the selected colors with their hex codes
-        return [neon_colors[key] for key in selected_colors]
+        return {key:neon_colors[key] for key in selected_colors}
 
     def ask_flash_and_adapter(self):
         """Ask the user if they need a flasher and an adapter in two steps."""

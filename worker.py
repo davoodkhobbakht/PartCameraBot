@@ -671,8 +671,8 @@ class Worker(threading.Thread):
         #mamad ramzi
 
 
-        text_png_path = self.__generate_text_image(self, custom_text,'danstevis' if font_choice =='danstevis_2' else font_choice ,
-                                                   background_color= 'white',
+        text_png_path = self.__generate_text_image( custom_text,'danstevis' if font_choice =='danstevis_2' else font_choice ,
+                                                   background_color= 'white' if order_info['background_color'] == 'سفید' else 'black',
                                                    neon_colors= order_info['neon_colors'].values(), shape=order_info['board_details']['shape'],
                                                     singleline = True if font_choice in ['danstevis','iransans'] else False)
         

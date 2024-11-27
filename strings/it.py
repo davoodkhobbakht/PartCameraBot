@@ -399,8 +399,8 @@ error_nonprivate_chat = "⚠️ Questo bot funziona solo in chat private."
 
 # Error: a message was sent in a chat, but no worker exists for that chat.
 # Suggest the creation of a new worker with /start
-error_no_worker_for_chat = "⚠️ La conversazione con il bot è interrotta.\n" \
-                           "Per riavviarla, manda il comando /start al bot."
+error_no_worker_for_chat = "⚠️ مکالمه با بات متوقف شد.\n" \
+                           "برای راه‌اندازی مجدد، دستور /start را به بات ارسال کنید."
 
 # Error: a message was sent in a chat, but the worker for that chat is not ready.
 error_worker_not_ready = "🕒 La conversazione con il bot è in fase di avvio.\n" \

@@ -1117,16 +1117,35 @@ class Worker(threading.Thread):
         return {"shape": shape, "length": length, "width": width}
     
     def ask_delivery_options(self):
-        # Inline keyboard for delivery method
+        """Ask the user for delivery options including method and address."""
+        # Step 1: Ask for the delivery method
         delivery_keyboard = telegram.InlineKeyboardMarkup([
             [telegram.InlineKeyboardButton("🚚 پست", callback_data="delivery_postal")],
             [telegram.InlineKeyboardButton("📦 مستقیم", callback_data="delivery_direct")]
         ])
-        self.bot.send_message(self.chat.id, "روش ارسال را انتخاب کنید:", reply_markup=delivery_keyboard)
+        self.bot.send_message(self.chat.id, "📦 لطفاً روش ارسال را انتخاب کنید:", reply_markup=delivery_keyboard)
         delivery_callback = self.__wait_for_inlinekeyboard_callback()
-        delivery_method = delivery_callback.data
 
-        return {"delivery_method": delivery_method}
+        # Map delivery method to user-friendly names
+        delivery_mapping = {
+            "delivery_postal": "پست",
+            "delivery_direct": "مستقیم",
+        }
+        delivery_method = delivery_mapping.get(delivery_callback.data, "نامشخص")
+
+        # Step 2: Ask for the delivery address
+        self.bot.send_message(self.chat.id, "📍 لطفاً آدرس ارسال را وارد کنید:")
+        delivery_address = self.__wait_for_regex(r".{5,}", cancellable=True)  # At least 5 characters for validation
+
+        if isinstance(delivery_address, CancelSignal):
+            self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.")
+            return None
+
+        return {
+            "delivery_method": delivery_method,
+            "delivery_address": delivery_address
+        }
+
     
     def ask_background_color(self):
         # Inline keyboard for background color selection (based on the form)

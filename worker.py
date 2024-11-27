@@ -774,7 +774,7 @@ class Worker(threading.Thread):
             "text":text,
             "font": font_choice,
             "shadowColors": [neon_color[1] for neon_color in neon_colors],
-            "outputPath":  '/home/doitiir/Lamponobot/tmp'+output_path,
+            "outputPath":  '/home/doitiir/Lamponobot/tmp/'+output_path,
             "shape": "border" if border == 'بله' else shape,
             "single_line": single_line,
             "background_color":background_color

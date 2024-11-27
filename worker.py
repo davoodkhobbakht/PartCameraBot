@@ -1008,19 +1008,46 @@ class Worker(threading.Thread):
 
 
     def ask_user_info(self):
-        # Ask for user's name
-        self.bot.send_message(self.chat.id, "👤 لطفا نام خود را وارد کنید:")
-        name = self.__wait_for_regex(r"(.*)", cancellable=True)
+        """Ask the user for personal information with error handling."""
+        
+        # Function to handle input validation
+        def validate_input(prompt, regex, error_message):
+            while True:
+                self.bot.send_message(self.chat.id, prompt)
+                response = self.__wait_for_regex(regex, cancellable=True)
+                if isinstance(response, CancelSignal):
+                    self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.")
+                    return None
+                if response:
+                    return response
+                self.bot.send_message(self.chat.id, error_message)
 
-        # Ask for birth date
-        self.bot.send_message(self.chat.id, "📅 کد ملی خود را وارد کنید")
-        birth_date = self.__wait_for_regex(r"\d{10}", cancellable=True)
+        # Ask for user's name
+        name_prompt = "👤 لطفاً نام خود را وارد کنید (حروف فارسی یا انگلیسی):"
+        name_regex = r"^[\u0600-\u06FF\sA-Za-z]+$"  # Matches Persian and English letters and spaces
+        name_error = "❌ نام نامعتبر است. لطفاً تنها از حروف فارسی یا انگلیسی استفاده کنید."
+        name = validate_input(name_prompt, name_regex, name_error)
+        if name is None:
+            return None
+
+        # Ask for national ID (Birth date field repurposed for ID)
+        id_prompt = "📅 کد ملی خود را وارد کنید (۱۰ رقم):"
+        id_regex = r"^\d{10}$"  # Matches exactly 10 digits
+        id_error = "❌ کد ملی نامعتبر است. لطفاً ۱۰ رقم وارد کنید."
+        national_id = validate_input(id_prompt, id_regex, id_error)
+        if national_id is None:
+            return None
 
         # Ask for contact information
-        self.bot.send_message(self.chat.id, "📞 شماره تماس خود را وارد کنید:")
-        phone = self.__wait_for_regex(r"(\+98|0)\d{10}", cancellable=True)
+        phone_prompt = "📞 شماره تماس خود را وارد کنید (فرمت +98 یا 09):"
+        phone_regex = r"^(?:\+98|0)?9\d{9}$"  # Matches +98 or 09 followed by 9 digits
+        phone_error = "❌ شماره تماس نامعتبر است. لطفاً شماره‌ای معتبر وارد کنید."
+        phone = validate_input(phone_prompt, phone_regex, phone_error)
+        if phone is None:
+            return None
 
-        return {"name": name, "birth_date": birth_date, "phone": phone}
+        return {"name": name, "birth_date": national_id, "phone": phone}
+
 
     def ask_board_details(self):
         # Inline keyboard for shape selection
@@ -1194,34 +1221,60 @@ class Worker(threading.Thread):
         return [neon_colors[key] for key in selected_colors]
 
     def ask_flash_and_adapter(self):
-        # Inline keyboard for flasher and adapter options
-        flash_adapter_keyboard = telegram.InlineKeyboardMarkup([
+        """Ask the user if they need a flasher and an adapter in two steps."""
+        # Step 1: Ask about the flasher
+        flasher_keyboard = telegram.InlineKeyboardMarkup([
             [
                 telegram.InlineKeyboardButton("✅ نیاز به فلاشر دارم", callback_data="flash_yes"),
                 telegram.InlineKeyboardButton("❌ نیازی به فلاشر ندارم", callback_data="flash_no"),
-            ],
+            ]
+        ])
+
+        self.bot.send_message(
+            self.chat.id,
+            "💡 آیا به فلاشر نیاز دارید؟",
+            reply_markup=flasher_keyboard
+        )
+
+        # Wait for user's response about the flasher
+        flasher_callback = self.__wait_for_inlinekeyboard_callback()
+        flasher_choice = flasher_callback.data
+
+        # Map flasher callback data to user-friendly names
+        flasher_mapping = {
+            "flash_yes": "نیاز به فلاشر دارد",
+            "flash_no": "نیاز به فلاشر ندارد",
+        }
+        flasher_result = flasher_mapping.get(flasher_choice, "نامشخص")
+
+        # Step 2: Ask about the adapter
+        adapter_keyboard = telegram.InlineKeyboardMarkup([
             [
                 telegram.InlineKeyboardButton("✅ نیاز به آداپتور دارم", callback_data="adapter_yes"),
                 telegram.InlineKeyboardButton("❌ نیازی به آداپتور ندارم", callback_data="adapter_no"),
-            ],
+            ]
         ])
 
-        # Send message with flasher and adapter options
-        self.bot.send_message(self.chat.id, "لطفاً مشخص کنید که آیا به فلاشر و آداپتور نیاز دارید:", reply_markup=flash_adapter_keyboard)
+        self.bot.send_message(
+            self.chat.id,
+            "🔌 آیا به آداپتور نیاز دارید؟",
+            reply_markup=adapter_keyboard
+        )
 
-        # Wait for user to select
-        flash_adapter_callback = self.__wait_for_inlinekeyboard_callback()
-        flash_or_adapter = flash_adapter_callback.data
+        # Wait for user's response about the adapter
+        adapter_callback = self.__wait_for_inlinekeyboard_callback()
+        adapter_choice = adapter_callback.data
 
-        # Map callback data to user-friendly names
-        flash_adapter_mapping = {
-            "flash_yes": "نیاز به فلاشر دارد",
-            "flash_no": "نیاز به فلاشر ندارد",
+        # Map adapter callback data to user-friendly names
+        adapter_mapping = {
             "adapter_yes": "نیاز به آداپتور دارد",
             "adapter_no": "نیاز به آداپتور ندارد",
         }
+        adapter_result = adapter_mapping.get(adapter_choice, "نامشخص")
 
-        return flash_adapter_mapping[flash_or_adapter]
+        # Return both results as a dictionary
+        return {"flasher": flasher_result, "adapter": adapter_result}
+
 
 
 

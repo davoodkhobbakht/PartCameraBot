@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import datetime
@@ -636,25 +637,22 @@ class Worker(threading.Thread):
                 # Go to the Help menu
                 self.__help_menu()
 
-
     def __text_order_process(self):
-        """Handle the text order process."""
+        """Handle the text order process including custom text, font selection, and payment."""
         # Step 1: Ask for custom text
-        self.bot.send_message(
-            self.chat.id,
-            "📝 لطفاً متن مورد نظر خود را برای تابلو نئون وارد کنید:"
-        )
+        self.bot.send_message(self.chat.id, "📝 لطفاً متن مورد نظر خود را برای تابلو نئون وارد کنید:")
         custom_text = self.__wait_for_regex(r"(.+)", cancellable=True)
-        
+
         if isinstance(custom_text, CancelSignal):
             self.bot.send_message(self.chat.id, "❌ سفارش لغو شد.")
             return
-        
+
         # Step 2: Ask for font
         font_keyboard = telegram.InlineKeyboardMarkup([
-            [telegram.InlineKeyboardButton("فونت ۱", callback_data="font1")],
-            [telegram.InlineKeyboardButton("ب تیتر دو خط", callback_data="font2")],
-            [telegram.InlineKeyboardButton("فونت ۳", callback_data="font3")],
+            [telegram.InlineKeyboardButton("دستنویس تک خط", callback_data="danstevis")],
+            [telegram.InlineKeyboardButton("ب تیتر دو خط", callback_data="Btitr")],
+            [telegram.InlineKeyboardButton("دست نویس دو خط", callback_data="danstevis_2")],
+            [telegram.InlineKeyboardButton("ایران سنس", callback_data="iransans")],
         ])
         self.bot.send_message(
             self.chat.id,
@@ -663,14 +661,25 @@ class Worker(threading.Thread):
         )
         font_callback = self.__wait_for_inlinekeyboard_callback()
         font_choice = font_callback.data
-        
-        # Step 3: Generate and send PDF
+
+        # Step 3: Collect additional order details (from __collect_info)
+        order_info = self.__collect_info(custom_text)
+
+        # Step 4: Generate and send PDF (or image if needed)
         self.bot.send_message(self.chat.id, "📄 در حال پردازش سفارش شما...")
-        self.collect_order(custom_text)
-        pdf_path = self.__generate_text_pdf(custom_text, font_choice)
-        self.bot.send_document(self.chat.id, open(pdf_path, "rb"))
         
+        #mamad ramzi
+
+
+        text_png_path = self.__generate_text_image(self, custom_text,'danstevis' if font_choice =='danstevis_2' else font_choice ,
+                                                   background_color= 'white' if order_info['background_color'] =="سفید" else 'black',
+                                                   neon_colors= order_info['neon_colors'].values(), shape=order_info['board_details']['shape'],
+                                                    singleline = True if font_choice in ['danstevis','iransans'] else False)
         
+        if text_png_path:
+            self.bot.send_photo(self.chat.id, open(text_png_path, "rb"))
+
+        # Step 5: Create the order in the database
         order = db.Order(
             user=self.user,
             creation_date=datetime.datetime.now(),
@@ -678,36 +687,122 @@ class Worker(threading.Thread):
         )
         self.session.add(order)
         self.session.commit()
-        # Step 4: Notify admins
-        admin_ids = self.session.query(db.Admin.user_id).all()
-        for admin_id in admin_ids:
-            self.bot.send_document(admin_id[0], open(pdf_path, "rb"))
-        
-        self.bot.send_message(self.chat.id, "✅ سفارش شما ثبت شد و به مدیران ارسال گردید.")
+
+        # Create a Product for the custom text order
+        product = db.Product(
+            name=f'{custom_text} تابلو متن دلخواه',
+            description='',
+            price=len(custom_text) * 150,  # Example price logic based on text length
+            deleted=False
+            
+        )
+        product.set_image(open(text_png_path,'r'))
+        self.session.add(product)
+        self.session.commit()
+
+        # Create the order item for the custom product
+        order_item = db.OrderItem(product=product, order=order)
+        self.session.add(order_item)
+        self.session.commit()
+
+        # Step 6: Notify the user with the order summary
+        order_summary = (
+            f"👤 نام: {order_info['user_info']['name']}\n"
+            f"📅 کد ملی: {order_info['user_info']['national_id']}\n"
+            f"📞 شماره تماس: {order_info['user_info']['phone']}\n"
+            f"📐 شکل تابلو: {order_info['board_details']['shape']}\n"
+            f"📏 ابعاد: {order_info['board_details']['dimensions']}\n"
+            f"🎨 رنگ پس‌زمینه: {order_info['background_color']}\n"
+            f"💡 رنگ‌های نئون:\n"
+            + "\n".join(
+                [f"   - {label} ({hex_code})" for label, hex_code in order_info['neon_colors'].values()]
+            )
+            + "\n"
+            f"🪝 جا آویز: {order_info['hanger']}\n"
+            f"🖌️ دورگیری: {order_info['border']}\n"
+            f"💡 فلاشر: {order_info['flash_and_adapter']['flasher']}\n"
+            f"🔌 آداپتور: {order_info['flash_and_adapter']['adapter']}\n"
+            f"🚚 روش ارسال: {order_info['delivery']['method']}\n"
+            f"📍 آدرس: {order_info['delivery']['address']}\n"
+            f"📝 متن سفارشی: {custom_text}\n"
+        )
+
+        # Confirm order with the user
+        confirmation_keyboard = telegram.InlineKeyboardMarkup([
+            [telegram.InlineKeyboardButton("تایید", callback_data="yes"),
+            telegram.InlineKeyboardButton("لغو", callback_data="no")]
+        ])
+
+        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفاً تایید کنید.", reply_markup=confirmation_keyboard)
+
+        # Wait for user confirmation
+        confirmation = self.__wait_for_inlinekeyboard_callback()
+        confirmation = confirmation.data
+
+        if confirmation == "yes":
+            # Redirect to payment
+            self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"))
+            payment_photo = self.__wait_for_photo(cancellable=False)
+
+            # Get the payment photo
+            photo_file = self.bot.get_file(payment_photo[0].file_id)
+            self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
+            self.bot.send_chat_action(self.chat.id, action="upload_photo")
+
+            # Set the image for the order and commit
+            order.set_image(photo_file)
+            self.session.commit()
+
+            # Final transaction for the order
+            self.__order_transaction(order=order, value=-int(self.__get_cart_value(self.cart)))
+
+        else:
+            # Cancel the order
+            self.bot.send_message(self.chat.id, "❌ سفارش شما لغو شد.")
+    
 
 
-    def __generate_text_pdf(self, text, font_choice):
-        """Generate a PDF file for the custom text order."""
-        pdf = FPDF()
-        pdf.add_page()
+    def __generate_text_image(self, text, font_choice, background_color, neon_colors, shape,border,single_line):
+        """Send a request to the PHP server to generate the PNG file for the custom text order."""
         
-        # Add Persian font support if necessary
-        font_path = {
-            "font1": "fonts/Font1.ttf",
-            "font2": "fonts/BTitrBd.ttf",
-            "font3": "fonts/Font3.ttf",
-        }.get(font_choice, "fonts/BTitrBd.ttf")
-        pdf.add_font('CustomFont', '', font_path, uni=True)
-        pdf.set_font('CustomFont', size=16)
-        
-        # Add text to PDF
-        pdf.multi_cell(0, 10, text)
-        
-        # Save PDF
-        pdf_path = f"/tmp/text_order_{uuid.uuid4().hex}.pdf"
-        pdf.output(pdf_path)
-        return pdf_path
 
+        output_path =f"text_order_{uuid.uuid4().hex}.jpg"
+        url = "https://doiti.ir/mmd.php"
+
+        payload = json.dumps({
+        "parameters": {
+            "text":text,
+            "font": font_choice,
+            "shadowColors": neon_colors,
+            "outputPath":  'home/doitiir/Lamponobot/tmp'+output_path,
+            "shape": "border" if border == 'بله' else shape,
+            "single_line": single_line,
+            "background_color":background_color
+        }
+        })
+        headers = {
+        'Content-Type': 'application/json'
+        }
+
+        # Send the request to the PHP server (adjust the URL based on your PHP file location)
+       
+        try:
+            response = requests.request("POST", url, headers=headers, data=payload)
+            response.raise_for_status()  # Raise an error for bad HTTP responses (4xx, 5xx)
+            
+            # Assuming the PHP server returns the file path to the generated PNG
+            png_path = output_path
+            print(response.content)
+            if png_path:
+                return png_path  # Return the path to the PNG file for further use
+            else:
+                self.bot.send_message(self.chat.id, "❌ خطا در پردازش تصویر.")
+                return None
+        
+        except requests.exceptions.RequestException as e:
+            # Handle errors that occur during the request
+            self.bot.send_message(self.chat.id, f"❌ مشکلی در ارتباط با سرور پیش آمد: {e}")
+            return None
 
     def __order_type_selection(self):
         """Ask user whether they want to order a product or a custom text."""
@@ -1044,7 +1139,7 @@ class Worker(threading.Thread):
 
         # Ask for contact information
         phone_prompt = "📞 شماره تماس خود را وارد کنید (فرمت +98 یا 09):"
-        phone_regex = r"^(?:\+98|0)?9\d{9}$"  # Matches +98 or 09 followed by 9 digits
+        phone_regex =r"^(?:\+98|0)?9[\d\u06F0-\u06F9]{9}$" # Matches +98 or 09 followed by 9 digits
         phone_error = "❌ شماره تماس نامعتبر است. لطفاً شماره‌ای معتبر وارد کنید."
         phone = validate_input(phone_prompt, phone_regex, phone_error)
         if phone is None:
@@ -1123,7 +1218,6 @@ class Worker(threading.Thread):
             "delivery_method": delivery_method,
             "delivery_address": delivery_address
         }
-
     
     def ask_background_color(self):
         # Inline keyboard for background color selection (based on the form)
@@ -1174,6 +1268,7 @@ class Worker(threading.Thread):
         # Wait for user response
         border_callback = self.__wait_for_inlinekeyboard_callback()
         return "بله" if border_callback.data == "border_yes" else "خیر"
+    
     def ask_neon_color(self):
         """Allow the user to select up to 3 neon colors using inline keyboards."""
         # Define neon colors with hex codes
@@ -1297,134 +1392,6 @@ class Worker(threading.Thread):
 
         # Return both results as a dictionary
         return {"flasher": flasher_result, "adapter": adapter_result}
-
-
-
-
-
-
-    def __generate_text_image(self, text, font_choice, background_color, neon_color, shape, length, width):
-        """Generate a PNG image for the custom text order with shape and colors."""
-        # Set up the font path based on the user's choice
-        font_path = {
-            "font1": "fonts/font1.ttf",
-            "font2": "fonts/BTitrBd.ttf",
-            "font3": "fonts/Font3.ttf",
-        }.get(font_choice, "fonts/BTitrBd.ttf")
-        font = ImageFont.truetype(font_path, size=48)  # You can adjust size based on `length` and `width`
-        
-        # Create a blank image with the background color
-        image = Image.new('RGB', (int(length), int(width)), color=background_color)
-        draw = ImageDraw.Draw(image)
-        
-        # Text size and positioning
-        text_width, text_height = draw.textsize(text, font=font)
-        text_x = (int(length) - text_width) // 2
-        text_y = (int(width) - text_height) // 2
-
-        # Draw shape around the text
-        if shape == "circle":
-            shape_radius = min(int(length), int(width)) // 3  # Adjust size for circle
-            shape_x = (int(length) - shape_radius * 2) // 2
-            shape_y = (int(width) - shape_radius * 2) // 2
-            draw.ellipse([shape_x, shape_y, shape_x + shape_radius * 2, shape_y + shape_radius * 2], fill=neon_color)
-        elif shape == "rectangle":
-            # Rectangle shape as the background
-            draw.rectangle([0, 0, int(length), int(width)], fill=neon_color)
-        
-        # Draw the text
-        draw.text((text_x, text_y), text, fill=neon_color, font=font)
-        
-        # Save the image
-        image_path = f"/tmp/text_order_{uuid.uuid4().hex}.png"
-        image.save(image_path)
-        
-        return image_path
-
-
-
-    def collect_order(self,custom_text = None):
-       
-        order = self.__collect_info()
-
-        # Confirm order
-        order_summary = (
-            f"👤 نام: {order['user_info']['name']}\n"
-            f"📅 کد ملی: {order['user_info']['national_id']}\n"
-            f"📞 شماره تماس: {order['user_info']['phone']}\n"
-            f"📐 شکل تابلو: {order['board_details']['shape']}\n"
-            f"📏 ابعاد: {order['board_details']['dimensions']}\n"
-            f"🎨 رنگ پس‌زمینه: {order['background_color']}\n"
-            f"💡 رنگ‌های نئون:\n"
-            + "\n".join(
-                [f"   - {label} ({hex_code})" for label, hex_code in order['neon_colors'].values()]
-            )
-            + "\n"
-            f"🪝 جا آویز: {order['hanger']}\n"
-            f"🖌️ دورگیری: {order['border']}\n"
-            f"💡 فلاشر: {order['flash_and_adapter']['flasher']}\n"
-            f"🔌 آداپتور: {order['flash_and_adapter']['adapter']}\n"
-            f"🚚 روش ارسال: {order['delivery']['method']}\n"
-            f"📍 آدرس: {order['delivery']['address']}\n"
-        )
-
-        if custom_text:
-            order_summary += f"📝 متن سفارشی: {custom_text}\n"
-        # Wait for user confirmation
-        confirmation_keyboard = telegram.InlineKeyboardMarkup([
-            [telegram.InlineKeyboardButton("تایید", callback_data="yes"),
-            telegram.InlineKeyboardButton("لغو", callback_data="no")]
-        ])
-        
-
-        self.bot.send_message(self.chat.id, f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup= confirmation_keyboard)
-        #this is where i want to use the __generate_text_image
-        '''generated_image_path = self.__generate_text_image(
-            text="Custom Neon Text",  # Use a placeholder for text or ask user for custom text
-            font_choice="font1",  # Default font, replace with user-selected font
-            background_color=background_color,
-            neon_color=neon_color,
-            shape=order['shape'],  # Circle or rectangle as selected by user
-            length=order['length'],
-            width=order['width']
-        )
-        self.bot.send_photo(self.chat_id,open(generated_image_path, "rb") , caption=f"سفارش شما:\n{order_summary}\nلطفا تایید کنید." ,reply_markup= confirmation_keyboard)
-        '''
-        confirmation = self.__wait_for_inlinekeyboard_callback()
-        confirmation = confirmation.data
-        
-        
-        if confirmation == "yes":
-            # Redirect to payment
-            self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"))
-            # Wait for an answer
-            payment_photo = self.__wait_for_photo(cancellable=False)
-
-            
-            # Get the file object associated with the photo
-            photo_file = self.bot.get_file(payment_photo[0].file_id)
-            # Notify the user that the bot is downloading the image and might be inactive for a while
-            self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
-            self.bot.send_chat_action(self.chat.id, action="upload_photo")
-
-            order = db.Order(user=self.user,
-                         creation_date=datetime.datetime.now(),
-                         notes=order_summary )
-            order.set_image(photo_file)
-            self.session.add(order)
-
-            # Commit the session changes
-            self.session.commit()
-            self.__order_transaction(order=order, value=-int(0))
-
-            
-        else:
-            # Cancel the order
-            self.bot.send_message(self.chat.id, "❌ سفارش شما لغو شد.")
-
-
-
-
 
     def __get_cart_summary(self, cart):
         # Create the cart summary

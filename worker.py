@@ -346,21 +346,28 @@ class Worker(threading.Thread):
             f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
         order = self.__collect_info()
-         # Confirm order
+        # Confirm order
         order_summary = (
-            f"👤 نام: {order['name']}\n"
-            f"📅 تاریخ تولد: {order['birth_date']}\n"
-            f" محصول : {product.name}\n" 
-            f"📞 شماره تماس: {order['phone']}\n"
-            f"📐 شکل تابلو: {order['shape']}\n"
-            f"📏 ابعاد: {order['length']}x{order['width']} سانتی‌متر\n"
+            f"👤 نام: {order['user_info']['name']}\n"
+            f"📅 کد ملی: {order['user_info']['national_id']}\n"
+            f"📞 شماره تماس: {order['user_info']['phone']}\n"
+            f"📐 شکل تابلو: {order['board_details']['shape']}\n"
+            f"📏 ابعاد: {order['board_details']['dimensions']}\n"
             f"🎨 رنگ پس‌زمینه: {order['background_color']}\n"
-            f"💡 رنگ نئون: {order['neon_color']}\n"
+            f"💡 رنگ‌های نئون:\n"
+            + "\n".join(
+                [f"   - {label} ({hex_code})" for label, hex_code in order['neon_colors'].values()]
+            )
+            + "\n"
             f"🪝 جا آویز: {order['hanger']}\n"
             f"🖌️ دورگیری: {order['border']}\n"
-            f"💡 فلاشر و آداپتور: {order['flash_adapter']}\n"
-            f"🚚 روش ارسال: {order['delivery_method']}"
+            f"💡 فلاشر: {order['flash_and_adapter']['flasher']}\n"
+            f"🔌 آداپتور: {order['flash_and_adapter']['adapter']}\n"
+            f"🚚 روش ارسال: {order['delivery']['method']}\n"
+            f"📍 آدرس: {order['delivery']['address']}\n"
         )
+
+   
         # Commit changes to the session
         self.session.commit()
 
@@ -753,7 +760,7 @@ class Worker(threading.Thread):
         background_color = self.ask_background_color()
 
         # Neon Color
-        neon_color = self.ask_neon_color()
+        neon_colors = self.ask_neon_color()
 
         # Hanger Option
         hanger_option = self.ask_hanger_option()
@@ -762,21 +769,35 @@ class Worker(threading.Thread):
         border_option = self.ask_border_option()
 
         # Flash and Adapter Options
-        flash_option = self.ask_flash_and_adapter()
+        flash_and_adapter = self.ask_flash_and_adapter()
 
         # Delivery Options
         delivery_options = self.ask_delivery_options()
 
         # Combine all information
+        # Combine all information
         order = {
-            **user_info,
-            **board_details,
-            "background_color": background_color,
-            "neon_color": neon_color,
-            "hanger": hanger_option,
-            "border": border_option,
-            "flash_adapter": flash_option,
-            **delivery_options
+            "user_info": {
+                "name": user_info["name"],
+                "national_id": user_info["birth_date"],  # Assuming ID was used for this field
+                "phone": user_info["phone"],
+            },
+            "board_details": {
+                "shape": board_details["shape"],
+                "dimensions": f"{board_details['length']}x{board_details['width']} سانتی‌متر",
+            },
+            "background_color": background_color,  # Single color
+            "neon_colors": neon_colors,  # Dictionary of up to 3 colors with HEX codes
+            "hanger": hanger_option,  # Boolean or descriptive text
+            "border": border_option,  # Boolean or descriptive text
+            "flash_and_adapter": {
+                "flasher": flash_and_adapter["flasher"],
+                "adapter": flash_and_adapter["adapter"],
+            },
+            "delivery": {
+                "method": delivery_options["delivery_method"],
+                "address": delivery_options["delivery_address"],
+            },
         }
         return order
 
@@ -938,18 +959,23 @@ class Worker(threading.Thread):
         # Ask if the user wants to add notes to the order
         summery =  self.__collect_info()
         order_summary = (
-            f"👤 نام: {summery['name']}\n"
-            f"📅 تاریخ تولد: {summery['birth_date']}\n"
-            f" محصول : {product.name}\n" 
-            f"📞 شماره تماس: {summery['phone']}\n"
-            f"📐 شکل تابلو: {summery['shape']}\n"
-            f"📏 ابعاد: {summery['length']}x{summery['width']} سانتی‌متر\n"
+            f"👤 نام: {summery['user_info']['name']}\n"
+            f"📅 کد ملی: {summery['user_info']['national_id']}\n"
+            f"📞 شماره تماس: {summery['user_info']['phone']}\n"
+            f"📐 شکل تابلو: {summery['board_details']['shape']}\n"
+            f"📏 ابعاد: {summery['board_details']['dimensions']}\n"
             f"🎨 رنگ پس‌زمینه: {summery['background_color']}\n"
-            f"💡 رنگ نئون: {summery['neon_color']}\n"
+            f"💡 رنگ‌های نئون:\n"
+            + "\n".join(
+                [f"   - {label} ({hex_code})" for label, hex_code in summery['neon_colors'].values()]
+            )
+            + "\n"
             f"🪝 جا آویز: {summery['hanger']}\n"
             f"🖌️ دورگیری: {summery['border']}\n"
-            f"💡 فلاشر و آداپتور: {summery['flash_adapter']}\n"
-            f"🚚 روش ارسال: {summery['delivery_method']}"
+            f"💡 فلاشر: {summery['flash_and_adapter']['flasher']}\n"
+            f"🔌 آداپتور: {summery['flash_and_adapter']['adapter']}\n"
+            f"🚚 روش ارسال: {summery['delivery']['method']}\n"
+            f"📍 آدرس: {summery['delivery']['address']}"
         )
         
         # Wait for user input
@@ -1326,19 +1352,27 @@ class Worker(threading.Thread):
 
         # Confirm order
         order_summary = (
-            f"👤 نام: {order['name']}\n"
-            f"📅 تاریخ تولد: {order['birth_date']}\n"
-            f" متن : {custom_text}\n" 
-            f"📞 شماره تماس: {order['phone']}\n"
-            f"📐 شکل تابلو: {order['shape']}\n"
-            f"📏 ابعاد: {order['length']}x{order['width']} سانتی‌متر\n"
+            f"👤 نام: {order['user_info']['name']}\n"
+            f"📅 کد ملی: {order['user_info']['national_id']}\n"
+            f"📞 شماره تماس: {order['user_info']['phone']}\n"
+            f"📐 شکل تابلو: {order['board_details']['shape']}\n"
+            f"📏 ابعاد: {order['board_details']['dimensions']}\n"
             f"🎨 رنگ پس‌زمینه: {order['background_color']}\n"
-            f"💡 رنگ نئون: {order['neon_color']}\n"
+            f"💡 رنگ‌های نئون:\n"
+            + "\n".join(
+                [f"   - {label} ({hex_code})" for label, hex_code in order['neon_colors'].values()]
+            )
+            + "\n"
             f"🪝 جا آویز: {order['hanger']}\n"
             f"🖌️ دورگیری: {order['border']}\n"
-            f"💡 فلاشر و آداپتور: {order['flash_adapter']}\n"
-            f"🚚 روش ارسال: {order['delivery_method']}"
+            f"💡 فلاشر: {order['flash_and_adapter']['flasher']}\n"
+            f"🔌 آداپتور: {order['flash_and_adapter']['adapter']}\n"
+            f"🚚 روش ارسال: {order['delivery']['method']}\n"
+            f"📍 آدرس: {order['delivery']['address']}\n"
         )
+
+    if custom_text:
+        order_summary += f"📝 متن سفارشی: {custom_text}\n"
         # Wait for user confirmation
         confirmation_keyboard = telegram.InlineKeyboardMarkup([
             [telegram.InlineKeyboardButton("تایید", callback_data="yes"),

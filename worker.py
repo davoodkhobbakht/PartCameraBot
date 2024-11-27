@@ -178,16 +178,15 @@ class Worker(threading.Thread):
         channel_username = "lampinoshop"
         self.bot.send_message(
             self.chat.id,
-            f"برای استفاده از ربات، لطفاً ابتدا کانال ما را دنبال کنید: [@{channel_username}](https://t.me/{channel_username})",
+            f"برای استفاده از ربات، لطفاً ابتدا کانال ما را دنبال کنید: [@{channel_username}]",
         )
         return
   
     def __add_to_cart(self, product_id):
-        
-        """Add a product to the user's cart from the channel."""
+        """Add a specific product to the user's cart when accessed via /start."""
         # Query the product from the database
-        p = self.session.query(db.Product).filter_by(id=product_id, deleted=False).one_or_none()
-        if not p:
+        product = self.session.query(db.Product).filter_by(id=product_id, deleted=False).one_or_none()
+        if not product:
             self.bot.send_message(self.chat.id, "❌ محصول موردنظر یافت نشد.")
             return
 
@@ -195,180 +194,129 @@ class Worker(threading.Thread):
         if not hasattr(self, "cart"):
             self.cart = {}
 
-        # Check if the p is already in the cart
+        # Check if the product is already in the cart
         if product_id in self.cart:
             self.cart[product_id][1] += 1  # Increment the quantity
         else:
             # Add the product to the cart with quantity 1
             self.cart[product_id] = [product, 1]
-        cart = self.cart
-        # Create the inline keyboard for the product in the cart
-        inline_keyboard = telegram.InlineKeyboardMarkup([
+
+        # Create the inline keyboard to update the cart
+        product_inline_keyboard = telegram.InlineKeyboardMarkup([
             [
-                telegram.InlineKeyboardButton(self.loc.get("menu_add_to_cart"), callback_data=f"cart_add_{product.id}"),
-                telegram.InlineKeyboardButton(self.loc.get("menu_remove_from_cart"), callback_data=f"cart_remove_{product.id}")
+                telegram.InlineKeyboardButton(self.loc.get("menu_add_to_cart"), callback_data="cart_add"),
+                telegram.InlineKeyboardButton(self.loc.get("menu_remove_from_cart"), callback_data="cart_remove"),
             ]
         ])
 
-        # Edit or send a message with the product details and the updated cart information
+        # Send the product details with the inline keyboard
         if product.image is None:
-            self.bot.send_message(
+            msg = self.bot.send_message(
                 self.chat.id,
                 product.text(w=self, cart_qty=self.cart[product_id][1]),
-                reply_markup=inline_keyboard
+                reply_markup=product_inline_keyboard
             )
         else:
-            self.bot.send_photo(
+            msg = self.bot.send_photo(
                 self.chat.id,
                 photo=product.image,
                 caption=product.text(w=self, cart_qty=self.cart[product_id][1]),
-                reply_markup=inline_keyboard
+                reply_markup=product_inline_keyboard
             )
-         # Create the keyboard with the cancel button
-        inline_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_cancel"),
-                                                                                        callback_data="cart_cancel")]])
-        # Send a message containing the button to cancel or pay
-        final_msg = self.bot.send_message(self.chat.id,
-                                          self.loc.get("conversation_cart_actions"),
-                                          reply_markup=inline_keyboard)
-        # Wait for user input
+
+        # Create a final action keyboard
+        final_inline_keyboard = telegram.InlineKeyboardMarkup([
+            [telegram.InlineKeyboardButton(self.loc.get("menu_cancel"), callback_data="cart_cancel")],
+            [telegram.InlineKeyboardButton(self.loc.get("menu_done"), callback_data="cart_done")]
+        ])
+
+        final_msg = self.bot.send_message(
+            self.chat.id,
+            self.loc.get("conversation_cart_actions"),
+            reply_markup=final_inline_keyboard
+        )
+
+        # Handle user interactions
         while True:
             callback = self.__wait_for_inlinekeyboard_callback()
-            # React to the user input
-            # If the cancel button has been pressed...
+
+            # Cancel cart
             if callback.data == "cart_cancel":
-                # Stop waiting for user input and go back to the previous menu
+                self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.")
                 return
-            # If a Add to Cart button has been pressed...
+
+            # Add product
             elif callback.data == "cart_add":
-                # Get the selected product, ensuring it exists
-                p = cart.get(callback.message.message_id)
-                if p is None:
-                    continue
-                product = p[0]
-                # Add 1 copy to the cart
-                cart[callback.message.message_id][1] += 1
-                # Create the product inline keyboard
-                product_inline_keyboard = telegram.InlineKeyboardMarkup(
-                    [
-                        [telegram.InlineKeyboardButton(self.loc.get("menu_add_to_cart"),
-                                                       callback_data="cart_add"),
-                         telegram.InlineKeyboardButton(self.loc.get("menu_remove_from_cart"),
-                                                       callback_data="cart_remove")]
-                    ])
-                # Create the final inline keyboard
-                final_inline_keyboard = telegram.InlineKeyboardMarkup(
-                    [
-                        [telegram.InlineKeyboardButton(self.loc.get("menu_cancel"), callback_data="cart_cancel")],
-                        [telegram.InlineKeyboardButton(self.loc.get("menu_done"), callback_data="cart_done")]
-                    ])
-                # Edit both the product and the final message
-                if product.image is None:
-                    self.bot.edit_message_text(chat_id=self.chat.id,
-                                               message_id=callback.message.message_id,
-                                               text=product.text(w=self,
-                                                                 cart_qty=cart[callback.message.message_id][1]),
-                                               reply_markup=product_inline_keyboard)
-                else:
-                    self.bot.edit_message_caption(chat_id=self.chat.id,
-                                                  message_id=callback.message.message_id,
-                                                  caption=product.text(w=self,
-                                                                       cart_qty=cart[callback.message.message_id][1]),
-                                                  reply_markup=product_inline_keyboard)
-
-                self.bot.edit_message_text(
-                    chat_id=self.chat.id,
-                    message_id=final_msg.message_id,
-                    text=self.loc.get("conversation_confirm_cart",
-                                      product_list=self.__get_cart_summary(cart),
-                                      total_cost=str(self.__get_cart_value(cart))),
-                    reply_markup=final_inline_keyboard)
-            # If the Remove from cart button has been pressed...
+                self.cart[product_id][1] += 1
+            # Remove product
             elif callback.data == "cart_remove":
-                # Get the selected product, ensuring it exists
-                p = cart.get(callback.message.message_id)
-                if p is None:
-                    continue
-                product = p[0]
-                # Remove 1 copy from the cart
-                if cart[callback.message.message_id][1] > 0:
-                    cart[callback.message.message_id][1] -= 1
+                if self.cart[product_id][1] > 0:
+                    self.cart[product_id][1] -= 1
                 else:
                     continue
-                # Create the product inline keyboard
-                product_inline_list = [[telegram.InlineKeyboardButton(self.loc.get("menu_add_to_cart"),
-                                                                      callback_data="cart_add")]]
-                if cart[callback.message.message_id][1] > 0:
-                    product_inline_list[0].append(telegram.InlineKeyboardButton(self.loc.get("menu_remove_from_cart"),
-                                                                                callback_data="cart_remove"))
-                product_inline_keyboard = telegram.InlineKeyboardMarkup(product_inline_list)
-                # Create the final inline keyboard
-                final_inline_list = [[telegram.InlineKeyboardButton(self.loc.get("menu_cancel"),
-                                                                    callback_data="cart_cancel")]]
-                for product_id in cart:
-                    if cart[product_id][1] > 0:
-                        final_inline_list.append([telegram.InlineKeyboardButton(self.loc.get("menu_done"),
-                                                                                callback_data="cart_done")])
-                        break
-                final_inline_keyboard = telegram.InlineKeyboardMarkup(final_inline_list)
-                # Edit the product message
-                if product.image is None:
-                    self.bot.edit_message_text(chat_id=self.chat.id, message_id=callback.message.message_id,
-                                               text=product.text(w=self,
-                                                                 cart_qty=cart[callback.message.message_id][1]),
-                                               reply_markup=product_inline_keyboard)
-                else:
-                    self.bot.edit_message_caption(chat_id=self.chat.id,
-                                                  message_id=callback.message.message_id,
-                                                  caption=product.text(w=self,
-                                                                       cart_qty=cart[callback.message.message_id][1]),
-                                                  reply_markup=product_inline_keyboard)
+            # Finish
+            elif callback.data == "cart_done":
+                break
 
+            # Update product message
+            if product.image is None:
                 self.bot.edit_message_text(
                     chat_id=self.chat.id,
-                    message_id=final_msg.message_id,
-                    text=self.loc.get("conversation_confirm_cart",
-                                      product_list=self.__get_cart_summary(cart),
-                                      total_cost=str(self.__get_cart_value(cart))),
-                    reply_markup=final_inline_keyboard)
-            # If the done button has been pressed...
-            elif callback.data == "cart_done":
-                # End the loop
-                break
-        # Create an inline keyboard with a single skip button
-        cancel = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_skip"),
-                                                                               callback_data="cmd_cancel")]])
-            
+                    message_id=msg.message_id,
+                    text=product.text(w=self, cart_qty=self.cart[product_id][1]),
+                    reply_markup=product_inline_keyboard
+                )
+            else:
+                self.bot.edit_message_caption(
+                    chat_id=self.chat.id,
+                    message_id=msg.message_id,
+                    caption=product.text(w=self, cart_qty=self.cart[product_id][1]),
+                    reply_markup=product_inline_keyboard
+                )
+
+            # Update final cart summary
+            self.bot.edit_message_text(
+                chat_id=self.chat.id,
+                message_id=final_msg.message_id,
+                text=self.loc.get(
+                    "conversation_confirm_cart",
+                    product_list=self.__get_cart_summary(self.cart),
+                    total_cost=str(self.__get_cart_value(self.cart))
+                ),
+                reply_markup=final_inline_keyboard
+            )
 
         # Notify the user
         self.bot.send_message(
             self.chat.id,
             f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
-        order = self.__collect_info()
-        # Confirm order
+
+        # Proceed to collect additional information for the order
+        order_info = self.__collect_info()
+
+        # Format and display the final order summary
         order_summary = (
-            f"👤 نام: {order['user_info']['name']}\n"
-            f"📅 کد ملی: {order['user_info']['national_id']}\n"
-            f"📞 شماره تماس: {order['user_info']['phone']}\n"
-            f"📐 شکل تابلو: {order['board_details']['shape']}\n"
-            f"📏 ابعاد: {order['board_details']['dimensions']}\n"
-            f"🎨 رنگ پس‌زمینه: {order['background_color']}\n"
+            f"👤 نام: {order_info['user_info']['name']}\n"
+            f"📅 کد ملی: {order_info['user_info']['national_id']}\n"
+            f"📞 شماره تماس: {order_info['user_info']['phone']}\n"
+            f"📐 شکل تابلو: {order_info['board_details']['shape']}\n"
+            f"📏 ابعاد: {order_info['board_details']['dimensions']}\n"
+            f"🎨 رنگ پس‌زمینه: {order_info['background_color']}\n"
             f"💡 رنگ‌های نئون:\n"
             + "\n".join(
-                [f"   - {label} ({hex_code})" for label, hex_code in order['neon_colors'].values()]
+                [f"   - {label} ({hex_code})" for label, hex_code in order_info['neon_colors'].values()]
             )
             + "\n"
-            f"🪝 جا آویز: {order['hanger']}\n"
-            f"🖌️ دورگیری: {order['border']}\n"
-            f"💡 فلاشر: {order['flash_and_adapter']['flasher']}\n"
-            f"🔌 آداپتور: {order['flash_and_adapter']['adapter']}\n"
-            f"🚚 روش ارسال: {order['delivery']['method']}\n"
-            f"📍 آدرس: {order['delivery']['address']}\n"
+            f"🪝 جا آویز: {order_info['hanger']}\n"
+            f"🖌️ دورگیری: {order_info['border']}\n"
+            f"💡 فلاشر: {order_info['flash_and_adapter']['flasher']}\n"
+            f"🔌 آداپتور: {order_info['flash_and_adapter']['adapter']}\n"
+            f"🚚 روش ارسال: {order_info['delivery']['method']}\n"
+            f"📍 آدرس: {order_info['delivery']['address']}\n"
         )
 
-   
-        # Commit changes to the session
+        self.bot.send_message(self.chat.id, f"📜 خلاصه سفارش:\n{order_summary}")
         self.session.commit()
 
     def run(self):

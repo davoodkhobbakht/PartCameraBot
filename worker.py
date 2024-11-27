@@ -780,6 +780,7 @@ class Worker(threading.Thread):
             "background_color":background_color
         }
         })
+        print(payload)
         headers = {
         'Content-Type': 'application/json'
         }

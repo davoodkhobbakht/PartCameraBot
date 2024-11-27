@@ -318,6 +318,36 @@ class Worker(threading.Thread):
 
         self.bot.send_message(self.chat.id, f"📜 خلاصه سفارش:\n{order_summary}")
         self.session.commit()
+            # Wait for payment
+        self.bot.send_message(self.chat.id, self.loc.get("ask_payment_image"))
+        payment_photo = self.__wait_for_photo(cancellable=False)
+
+        # Process payment image and finalize the order
+        photo_file = self.bot.get_file(payment_photo[0].file_id)
+        self.bot.send_message(self.chat.id, self.loc.get("downloading_image"))
+        self.bot.send_chat_action(self.chat.id, action="upload_photo")
+
+        # Create the order in the database
+        order_db = db.Order(
+            user=self.user,
+            creation_date=datetime.datetime.now(),
+            notes=order_summary
+        )
+        order_db.set_image(photo_file)
+        self.session.add(order_db)
+
+        # Add the cart items to the order
+        for product_id, (product, qty) in self.cart.items():
+            for _ in range(qty):
+                order_item = db.OrderItem(product=product, order=order_db)
+                self.session.add(order_item)
+
+        # Commit the session and complete the transaction
+        self.session.commit()
+        self.__order_transaction(order=order_db, value=-int(self.__get_cart_value(self.cart)))
+
+        self.bot.send_message(self.chat.id, "✅ سفارش شما با موفقیت ثبت شد.")
+
 
     def run(self):
         """The conversation code."""

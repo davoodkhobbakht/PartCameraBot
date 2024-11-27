@@ -672,7 +672,7 @@ class Worker(threading.Thread):
 
 
         text_png_path = self.__generate_text_image(self, custom_text,'danstevis' if font_choice =='danstevis_2' else font_choice ,
-                                                   background_color= 'white' if order_info['background_color'] =="سفید" else 'black',
+                                                   background_color= 'white',
                                                    neon_colors= order_info['neon_colors'].values(), shape=order_info['board_details']['shape'],
                                                     singleline = True if font_choice in ['danstevis','iransans'] else False)
         
@@ -773,7 +773,7 @@ class Worker(threading.Thread):
         "parameters": {
             "text":text,
             "font": font_choice,
-            "shadowColors": neon_colors,
+            "shadowColors": [neon_color[1] for neon_color in neon_colors],
             "outputPath":  'home/doitiir/Lamponobot/tmp'+output_path,
             "shape": "border" if border == 'بله' else shape,
             "single_line": single_line,

@@ -663,7 +663,7 @@ class Worker(threading.Thread):
         font_choice = font_callback.data
 
         # Step 3: Collect additional order details (from __collect_info)
-        order_info = self.__collect_info(custom_text)
+        order_info = self.__collect_info()
 
         # Step 4: Generate and send PDF (or image if needed)
         self.bot.send_message(self.chat.id, "📄 در حال پردازش سفارش شما...")

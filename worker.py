@@ -1124,41 +1124,75 @@ class Worker(threading.Thread):
         # Wait for user response
         border_callback = self.__wait_for_inlinekeyboard_callback()
         return "بله" if border_callback.data == "border_yes" else "خیر"
-
     def ask_neon_color(self):
-        # Inline keyboard for neon color selection
-        neon_color_keyboard = telegram.InlineKeyboardMarkup([
-            [
-                telegram.InlineKeyboardButton("🔴 قرمز", callback_data="neon_red"),
-                telegram.InlineKeyboardButton("🔵 آبی", callback_data="neon_blue"),
-            ],
-            [
-                telegram.InlineKeyboardButton("🟢 سبز", callback_data="neon_green"),
-                telegram.InlineKeyboardButton("🟠 نارنجی", callback_data="neon_orange"),
-            ],
-            [
-                telegram.InlineKeyboardButton("⚪ سفید", callback_data="neon_white")
-            ]
-        ])
-
-        # Send the message with neon color options
-        self.bot.send_message(self.chat.id, "💡 لطفاً رنگ نئون تابلو را انتخاب کنید:", reply_markup=neon_color_keyboard)
-        
-        # Wait for user to select a color
-        neon_color_callback = self.__wait_for_inlinekeyboard_callback()
-        neon_color = neon_color_callback.data
-
-        # Map the callback data to color names
-        neon_color_mapping = {
-            "neon_red": "قرمز",
-            "neon_blue": "آبی",
-            "neon_green": "سبز",
-            "neon_orange": "نارنجی",
-            "neon_white": "سفید",
+        """Allow the user to select up to 3 neon colors using inline keyboards."""
+        # Define neon colors with hex codes
+        neon_colors = {
+            "neon_red": ("🔴 قرمز", "#FF073A"),
+            "neon_blue": ("🔵 آبی", "#1B03A3"),
+            "neon_green": ("🟢 سبز", "#39FF14"),
+            "neon_orange": ("🟠 نارنجی", "#FF6700"),
+            "neon_purple": ("🟣 بنفش", "#A349A4"),
+            "neon_yellow": ("🟡 زرد", "#FFFF00"),
+            "neon_pink": ("🌸 صورتی", "#FF1493"),
+            "neon_white": ("⚪ سفید", "#FFFFFF"),
         }
 
-        return neon_color_mapping[neon_color]
-    
+        # Track selected colors
+        selected_colors = set()
+
+        while True:
+            # Create the inline keyboard dynamically based on selection
+            buttons = []
+            for key, (label, _) in neon_colors.items():
+                if key in selected_colors:
+                    # Add ✅ to selected options
+                    buttons.append(telegram.InlineKeyboardButton(f"✅ {label}", callback_data=key))
+                else:
+                    buttons.append(telegram.InlineKeyboardButton(label, callback_data=key))
+            
+            # Divide buttons into rows of 2
+            keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
+            keyboard.append([telegram.InlineKeyboardButton("✔️ تایید انتخاب", callback_data="confirm_selection")])
+
+            # Send or edit the message with the updated keyboard
+            if not selected_colors:
+                msg = self.bot.send_message(
+                    self.chat.id,
+                    "💡 لطفاً تا ۳ رنگ نئون انتخاب کنید (روی گزینه‌های انتخاب‌شده کلیک کنید تا از انتخاب خارج شوند):",
+                    reply_markup=telegram.InlineKeyboardMarkup(keyboard)
+                )
+            else:
+                self.bot.edit_message_reply_markup(
+                    chat_id=self.chat.id,
+                    message_id=msg.message_id,
+                    reply_markup=telegram.InlineKeyboardMarkup(keyboard)
+                )
+
+            # Wait for user selection
+            callback = self.__wait_for_inlinekeyboard_callback()
+
+            if callback.data == "confirm_selection":
+                if 1 <= len(selected_colors) <= 3:
+                    # Limit the selection to 1-3 colors
+                    self.bot.send_message(self.chat.id, "✅ رنگ‌های انتخاب‌شده با موفقیت ثبت شد.")
+                    break
+                else:
+                    self.bot.send_message(self.chat.id, "❌ لطفاً حداکثر ۳ رنگ انتخاب کنید.")
+                    continue
+
+            # Toggle selection
+            if callback.data in selected_colors:
+                selected_colors.remove(callback.data)
+            else:
+                if len(selected_colors) < 3:
+                    selected_colors.add(callback.data)
+                else:
+                    self.bot.send_message(self.chat.id, "❌ حداکثر ۳ رنگ می‌توانید انتخاب کنید.")
+
+        # Return the selected colors with their hex codes
+        return [neon_colors[key] for key in selected_colors]
+
     def ask_flash_and_adapter(self):
         # Inline keyboard for flasher and adapter options
         flash_adapter_keyboard = telegram.InlineKeyboardMarkup([

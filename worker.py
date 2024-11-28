@@ -1320,6 +1320,9 @@ class Worker(threading.Thread):
         # Track selected colors
         selected_colors = set()
 
+        # Initial message placeholder
+        msg = None
+
         while True:
             # Create the inline keyboard dynamically based on selection
             buttons = []
@@ -1329,19 +1332,20 @@ class Worker(threading.Thread):
                     buttons.append(telegram.InlineKeyboardButton(f"✅ {label}", callback_data=key))
                 else:
                     buttons.append(telegram.InlineKeyboardButton(label, callback_data=key))
-            
+
             # Divide buttons into rows of 2
             keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
             keyboard.append([telegram.InlineKeyboardButton("✔️ تایید انتخاب", callback_data="confirm_selection")])
 
             # Send or edit the message with the updated keyboard
-            if not selected_colors:
+            if not msg:
                 msg = self.bot.send_message(
                     self.chat.id,
                     "💡 لطفاً تا ۳ رنگ نئون انتخاب کنید (روی گزینه‌های انتخاب‌شده کلیک کنید تا از انتخاب خارج شوند):",
                     reply_markup=telegram.InlineKeyboardMarkup(keyboard)
                 )
             else:
+                # Only edit if the reply markup has changed
                 self.bot.edit_message_reply_markup(
                     chat_id=self.chat.id,
                     message_id=msg.message_id,
@@ -1357,7 +1361,7 @@ class Worker(threading.Thread):
                     self.bot.send_message(self.chat.id, "✅ رنگ‌های انتخاب‌شده با موفقیت ثبت شد.")
                     break
                 else:
-                    self.bot.send_message(self.chat.id, "❌ لطفاً حداکثر ۳ رنگ انتخاب کنید.")
+                    self.bot.send_message(self.chat.id, "❌ لطفاً بین ۱ تا ۳ رنگ انتخاب کنید.")
                     continue
 
             # Toggle selection
@@ -1370,7 +1374,9 @@ class Worker(threading.Thread):
                     self.bot.send_message(self.chat.id, "❌ حداکثر ۳ رنگ می‌توانید انتخاب کنید.")
 
         # Return the selected colors with their hex codes
-        return {key:neon_colors[key] for key in selected_colors}
+        return {key: neon_colors[key] for key in selected_colors}
+
+
 
     def ask_flash_and_adapter(self):
         """Ask the user if they need a flasher and an adapter in two steps."""

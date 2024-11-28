@@ -327,7 +327,7 @@ class Worker(threading.Thread):
             f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
             f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
             f"🚚 روش ارسال: {delivery_options['delivery_method']}\n"
-            f"📍 آدرس: {delivery_options['address']}"
+            f"📍 آدرس: {delivery_options['delivery_address']}"
         )
         
 
@@ -706,7 +706,7 @@ class Worker(threading.Thread):
         product = db.Product(
             name=f'{custom_text} تابلو متن دلخواه',
             description='',
-            price=len(custom_text) * 150,  # Example price logic based on text length
+            price=len(custom_text) * 150000,  # Example price logic based on text length
             deleted=False
             
         )

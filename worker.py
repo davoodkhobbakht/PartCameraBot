@@ -677,7 +677,7 @@ class Worker(threading.Thread):
                                                     single_line = True if font_choice in ['danstevis','iransans'] else False , border = order_info['border'] )
         
         if text_png_path:
-            self.bot.send_photo(self.chat.id, open(text_png_path, "rb"))
+            self.bot.send_photo(self.chat.id, open('/home/doitiir/public_html/'+text_png_path, "rb"))
 
         # Step 5: Create the order in the database
         order = db.Order(
@@ -1152,10 +1152,10 @@ class Worker(threading.Thread):
     def ask_board_details(self):
         # Inline keyboard for shape selection
         shape_keyboard = telegram.InlineKeyboardMarkup([
-            [telegram.InlineKeyboardButton("🔵 دایره", callback_data="shape_circle")],
-            [telegram.InlineKeyboardButton("🔶 لوزی", callback_data="shape_diamond")],
-            [telegram.InlineKeyboardButton("⬛ مربع", callback_data="shape_square")],
-            [telegram.InlineKeyboardButton("🔲 مستطیل", callback_data="shape_rectangle")]
+            [telegram.InlineKeyboardButton("🔵 دایره", callback_data="circle")],
+            [telegram.InlineKeyboardButton("🔶 لوزی", callback_data="diamond")],
+            [telegram.InlineKeyboardButton("⬛ مربع", callback_data="square")],
+            [telegram.InlineKeyboardButton("🔲 مستطیل", callback_data="rectangle")]
         ])
         self.bot.send_message(self.chat.id, "📐 شکل تابلو مورد نظر خود را انتخاب کنید:", reply_markup=shape_keyboard)
         shape_callback = self.__wait_for_inlinekeyboard_callback()

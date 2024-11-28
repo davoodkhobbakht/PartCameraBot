@@ -666,7 +666,7 @@ class Worker(threading.Thread):
         order_info = self.__collect_info()
 
         # Step 4: Generate and send PDF (or image if needed)
-        self.bot.send_message(self.chat.id, "📄 در حال پردازش سفارش شما...")
+        self.bot.send_message(self.chat.id, "📄 در حال ساخت پیش نمایش سفارش شما...")
         
         #mamad ramzi
 
@@ -677,7 +677,7 @@ class Worker(threading.Thread):
                                                     single_line = True if font_choice in ['danstevis','iransans'] else False , border = order_info['border'] )
         
         if text_png_path:
-            self.bot.send_photo(self.chat.id, open('/home/doitiir/public_html/'+text_png_path, "rb") )
+            self.bot.send_photo(self.chat.id, open('/home/doitiir/public_html/'+text_png_path, "rb") ,caption = 'طرح نهاییتون میتونه طبق سلیقه شما باشه و این تنها یک پیش نمایش از متن شماست. ')
 
         # Step 5: Create the order in the database
         order = db.Order(
@@ -854,7 +854,7 @@ class Worker(threading.Thread):
         order = {
             "user_info": {
                 "name": user_info["name"],
-                "national_id": user_info["birth_date"],  # Assuming ID was used for this field
+                "national_id": user_info["national_id"],  # Assuming ID was used for this field
                 "phone": user_info["phone"],
             },
             "board_details": {
@@ -1032,25 +1032,43 @@ class Worker(threading.Thread):
         cancel = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(self.loc.get("menu_skip"),
                                                                                callback_data="cmd_cancel")]])
         # Ask if the user wants to add notes to the order
-        summery =  self.__collect_info()
+        #summery =  self.__collect_info()
+        # Personal Info
+        user_info = self.ask_user_info()
+
+        # Background Color
+        background_color = self.ask_background_color()
+
+        # Neon Color
+        neon_colors = self.ask_neon_color()
+
+        # Hanger Option
+        hanger_option = self.ask_hanger_option()
+
+        # Flash and Adapter Options
+        flash_and_adapter = self.ask_flash_and_adapter()
+
+        # Delivery Options
+        delivery_options = self.ask_delivery_options()
+
+
+        
+        
         order_summary = (
-            f"👤 نام: {summery['user_info']['name']}\n"
-            f"📅 کد ملی: {summery['user_info']['national_id']}\n"
-            f"📞 شماره تماس: {summery['user_info']['phone']}\n"
-            f"📐 شکل تابلو: {summery['board_details']['shape']}\n"
-            f"📏 ابعاد: {summery['board_details']['dimensions']}\n"
-            f"🎨 رنگ پس‌زمینه: {summery['background_color']}\n"
+            f"👤 نام: {user_info['name']}\n"
+            f"📅 کد ملی: {user_info['national_id']}\n"
+            f"📞 شماره تماس: {user_info['phone']}\n"
+            f"🎨 رنگ پس‌زمینه: { background_color}\n"
             f"💡 رنگ‌های نئون:\n"
             + "\n".join(
-                [f"   - {label} ({hex_code})" for label, hex_code in summery['neon_colors'].values()]
+                [f"   - {label} ({hex_code})" for label, hex_code in neon_colors.values()]
             )
             + "\n"
-            f"🪝 جا آویز: {summery['hanger']}\n"
-            f"🖌️ دورگیری: {summery['border']}\n"
-            f"💡 فلاشر: {summery['flash_and_adapter']['flasher']}\n"
-            f"🔌 آداپتور: {summery['flash_and_adapter']['adapter']}\n"
-            f"🚚 روش ارسال: {summery['delivery']['method']}\n"
-            f"📍 آدرس: {summery['delivery']['address']}"
+            f"🪝 جا آویز: {hanger_option}\n"
+            f"💡 فلاشر: {flash_and_adapter["flasher"]}\n"
+            f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
+            f"🚚 روش ارسال: {delivery_options["delivery_method"]}\n"
+            f"📍 آدرس: {delivery_options['address']}"
         )
         
         # Wait for user input
@@ -1147,7 +1165,7 @@ class Worker(threading.Thread):
         if phone is None:
             return None
 
-        return {"name": name, "birth_date": national_id, "phone": phone}
+        return {"name": name, "national_id": national_id, "phone": phone}
 
 
     def ask_board_details(self):

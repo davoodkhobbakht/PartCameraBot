@@ -1082,7 +1082,7 @@ class Worker(threading.Thread):
             f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
             f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
             f"🚚 روش ارسال: {delivery_options['delivery_method']}\n"
-            f"📍 آدرس: {delivery_options['address']}"
+            f"📍 آدرس: {delivery_options['delivery_address']}"
         )
         
         # Wait for user input

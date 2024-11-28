@@ -293,29 +293,43 @@ class Worker(threading.Thread):
             f"✅ محصول '{product.name}' به سبد خرید شما افزوده شد."
         )
 
-        # Proceed to collect additional information for the order
-        order_info = self.__collect_info()
+        user_info = self.ask_user_info()
 
-        # Format and display the final order summary
+        # Background Color
+        background_color = self.ask_background_color()
+
+        # Neon Color
+        neon_colors = self.ask_neon_color()
+
+        # Hanger Option
+        hanger_option = self.ask_hanger_option()
+
+        # Flash and Adapter Options
+        flash_and_adapter = self.ask_flash_and_adapter()
+
+        # Delivery Options
+        delivery_options = self.ask_delivery_options()
+
+
+        
+        
         order_summary = (
-            f"👤 نام: {order_info['user_info']['name']}\n"
-            f"📅 کد ملی: {order_info['user_info']['national_id']}\n"
-            f"📞 شماره تماس: {order_info['user_info']['phone']}\n"
-            f"📐 شکل تابلو: {order_info['board_details']['shape']}\n"
-            f"📏 ابعاد: {order_info['board_details']['dimensions']}\n"
-            f"🎨 رنگ پس‌زمینه: {order_info['background_color']}\n"
+            f"👤 نام: {user_info['name']}\n"
+            f"📅 کد ملی: {user_info['national_id']}\n"
+            f"📞 شماره تماس: {user_info['phone']}\n"
+            f"🎨 رنگ پس‌زمینه: { background_color}\n"
             f"💡 رنگ‌های نئون:\n"
             + "\n".join(
-                [f"   - {label} ({hex_code})" for label, hex_code in order_info['neon_colors'].values()]
+                [f"   - {label} ({hex_code})" for label, hex_code in neon_colors.values()]
             )
             + "\n"
-            f"🪝 جا آویز: {order_info['hanger']}\n"
-            f"🖌️ دورگیری: {order_info['border']}\n"
-            f"💡 فلاشر: {order_info['flash_and_adapter']['flasher']}\n"
-            f"🔌 آداپتور: {order_info['flash_and_adapter']['adapter']}\n"
-            f"🚚 روش ارسال: {order_info['delivery']['method']}\n"
-            f"📍 آدرس: {order_info['delivery']['address']}\n"
+            f"🪝 جا آویز: {hanger_option}\n"
+            f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
+            f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
+            f"🚚 روش ارسال: {delivery_options['delivery_method']}\n"
+            f"📍 آدرس: {delivery_options['address']}"
         )
+        
 
         self.bot.send_message(self.chat.id, f"📜 خلاصه سفارش:\n{order_summary}")
         self.session.commit()
@@ -1065,9 +1079,9 @@ class Worker(threading.Thread):
             )
             + "\n"
             f"🪝 جا آویز: {hanger_option}\n"
-            f"💡 فلاشر: {flash_and_adapter["flasher"]}\n"
+            f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
             f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
-            f"🚚 روش ارسال: {delivery_options["delivery_method"]}\n"
+            f"🚚 روش ارسال: {delivery_options['delivery_method']}\n"
             f"📍 آدرس: {delivery_options['address']}"
         )
         

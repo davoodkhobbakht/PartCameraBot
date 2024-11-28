@@ -677,7 +677,7 @@ class Worker(threading.Thread):
                                                     single_line = True if font_choice in ['danstevis','iransans'] else False , border = order_info['border'] )
         
         if text_png_path:
-            self.bot.send_photo(self.chat.id, open('/home/doitiir/public_html/'+text_png_path, "rb"))
+            self.bot.send_photo(self.chat.id, open('/home/doitiir/public_html/'+text_png_path, "rb") )
 
         # Step 5: Create the order in the database
         order = db.Order(
@@ -696,7 +696,9 @@ class Worker(threading.Thread):
             deleted=False
             
         )
-        product.set_image(open('/home/doitiir/public_html/'+text_png_path, "rb"))
+        text_png_path_full = '/home/doitiir/public_html/' + text_png_path
+        with open(text_png_path_full, "r") as file:
+            product.set_image(file)
         self.session.add(product)
         self.session.commit()
 

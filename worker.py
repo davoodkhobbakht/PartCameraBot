@@ -697,7 +697,7 @@ class Worker(threading.Thread):
             
         )
         
-        product.set_image(file='/home/doitiir/public_html/'+text_png_path)
+        product.set_image(file='https://doiti.ir/'+text_png_path)
         self.session.add(product)
         self.session.commit()
 

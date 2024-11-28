@@ -696,7 +696,7 @@ class Worker(threading.Thread):
             deleted=False
             
         )
-        product.set_image(open(text_png_path,'r'))
+        product.set_image(open('/home/doitiir/public_html/'+text_png_path, "rb"))
         self.session.add(product)
         self.session.commit()
 

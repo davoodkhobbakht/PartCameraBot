@@ -696,9 +696,9 @@ class Worker(threading.Thread):
             deleted=False
             
         )
-        text_png_path_full = '/home/doitiir/public_html/' + text_png_path
-        with open(text_png_path_full, "rb") as file:
-            product.set_image(file)
+        #text_png_path_full = '/home/doitiir/public_html/' + text_png_path
+        if text_png_path :
+            product.set_image(f"https://doiti.ir/{text_png_path}")
         self.session.add(product)
         self.session.commit()
 

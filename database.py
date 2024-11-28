@@ -139,7 +139,10 @@ class Product(TableDeclarativeBase):
         """Download an image from Telegram and store it in the image column.
         This is a slow blocking function. Try to avoid calling it directly, use a thread if possible."""
         # Download the photo through a get request
-        r = requests.get(file.file_path)
+        if isinstance(file , str):
+            r = requests.get(file)
+        else:
+            r = requests.get(file.file_path)
         # Store the photo in the database record
         self.image = r.content
 

@@ -696,8 +696,8 @@ class Worker(threading.Thread):
             deleted=False
             
         )
-        text_file = telegram.File(file_path='/home/doitiir/public_html/'+text_png_path)
-        product.set_image(file=text_file)
+        
+        product.set_image(file='/home/doitiir/public_html/'+text_png_path)
         self.session.add(product)
         self.session.commit()
 

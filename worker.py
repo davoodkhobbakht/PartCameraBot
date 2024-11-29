@@ -740,6 +740,7 @@ class Worker(threading.Thread):
             f"🚚 روش ارسال: {order_info['delivery']['method']}\n"
             f"📍 آدرس: {order_info['delivery']['address']}\n"
             f"📝 متن سفارشی: {custom_text}\n"
+            f"مبلغ بیعانه: {product.price}\n"
         )
 
         # Confirm order with the user

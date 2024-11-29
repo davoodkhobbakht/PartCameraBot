@@ -24,6 +24,8 @@ import nuconfig
 log = logging.getLogger(__name__)
 
 
+
+
 class StopSignal:
     """A data class that should be sent to the worker when the conversation has to be stopped abnormally."""
 
@@ -38,6 +40,21 @@ class CancelSignal:
 
 class Worker(threading.Thread):
     """A worker for a single conversation. A new one is created every time the /start command is sent."""
+
+
+    def log_error(self, error, context=""):
+        """Logs an error and notifies the admin."""
+        admin_chat_id = 94652467  # Replace with your Telegram chat ID
+        error_message = f"Error in {context}:\n{str(error)}\nTraceback:\n{traceback.format_exc()}"
+        logging.error(error_message)
+        try:
+            self.bot.send_message(admin_chat_id, error_message)
+        except Exception as notify_error:
+            logging.error(f"Failed to notify admin: {notify_error}")
+
+
+
+
 
     def __init__(self,
                  bot,
@@ -899,7 +916,10 @@ class Worker(threading.Thread):
         order_type = self.__order_type_selection()
 
         if order_type == "order_text":
-            self.__text_order_process()
+            try:
+                self.__text_order_process()
+            except Exception as e:
+                self.log_error(e, context="__text_order_process")
             return  # Exit after handling text order
         products = self.session.query(db.Product).filter_by(deleted=False).all()
         # Create a dict to be used as 'cart'

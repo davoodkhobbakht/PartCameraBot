@@ -1233,7 +1233,7 @@ class Worker(threading.Thread):
 
 
     def ask_board_details(self):
-        """Ask the user for board details."""
+        """Ask the user for board details with back and cancel handling."""
         board_details = {"shape": None, "length": None, "width": None}
         steps = [
             ("📐 شکل تابلو مورد نظر خود را انتخاب کنید:", "shape", "inline_keyboard", None),
@@ -1248,22 +1248,30 @@ class Worker(threading.Thread):
             prompt, key, input_type, error_message = steps[step_index]
 
             if input_type == "inline_keyboard" and key == "shape":
+                # Inline keyboard with shapes and a back button
                 keyboard = telegram.InlineKeyboardMarkup([
                     [telegram.InlineKeyboardButton("🔵 دایره", callback_data="circle")],
                     [telegram.InlineKeyboardButton("🔶 لوزی", callback_data="diamond")],
                     [telegram.InlineKeyboardButton("⬛ مربع", callback_data="square")],
                     [telegram.InlineKeyboardButton("🔲 مستطیل", callback_data="rectangle")],
+                    [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")],
                 ])
                 self.bot.send_message(self.chat.id, prompt, reply_markup=keyboard)
+
                 response = self.__wait_for_inlinekeyboard_callback()
 
-                if response.data == "⬅️ بازگشت":
+                if response.data == "back":
                     if step_index > 0:
                         step_index -= 1
-                else:
+                    else:
+                        self.bot.send_message(self.chat.id, "❌ نمی‌توانید به مرحله قبل برگردید.")
+                elif response.data in ["circle", "diamond", "square", "rectangle"]:
                     board_details[key] = response.data
                     step_index += 1
+                else:
+                    self.bot.send_message(self.chat.id, "❌ گزینه نامعتبر است. لطفاً دوباره تلاش کنید.")
             else:
+                # Handle text input steps (length and width)
                 self.bot.send_message(self.chat.id, prompt, reply_markup=main_keyboard)
                 response = self.__wait_for_regex(rf"({input_type}|⬅️ بازگشت)", cancellable=True)
 
@@ -1272,13 +1280,22 @@ class Worker(threading.Thread):
                 elif response == "⬅️ بازگشت":
                     if step_index > 0:
                         step_index -= 1
+                    else:
+                        self.bot.send_message(self.chat.id, "❌ نمی‌توانید به مرحله قبل برگردید.")
                 elif re.match(input_type, response):
                     board_details[key] = response
                     step_index += 1
                 else:
                     self.bot.send_message(self.chat.id, error_message)
 
+        # Finalize the details
+        self.bot.send_message(
+            self.chat.id,
+            "✅ جزئیات تابلو با موفقیت ثبت شد.",
+            reply_markup=telegram.ReplyKeyboardRemove(),
+        )
         return board_details
+
 
     
 

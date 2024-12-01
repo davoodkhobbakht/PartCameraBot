@@ -854,91 +854,74 @@ class Worker(threading.Thread):
     
 
     def __collect_info(self):
-        """Collect all necessary information from the user with back button handling."""
+        """
+        Collect all necessary information from the user with back button handling.
+        Allows navigation between steps of the flow.
+        """
         steps = [
-            ("ask_user_info", "Personal Info", None),
-            ("ask_board_details", "Board Details", None),
-            ("ask_background_color", "Background Color", None),
-            ("ask_neon_color", "Neon Colors", None),
-            ("ask_hanger_option", "Hanger Option", None),
-            ("ask_border_option", "Border Option", None),
-            ("ask_flash_and_adapter", "Flash and Adapter", None),
-            ("ask_delivery_options", "Delivery Options", None),
+            ("ask_user_info", "Personal Info"),
+            ("ask_board_details", "Board Details"),
+            ("ask_background_color", "Background Color"),
+            ("ask_hanger_option", "Hanger Option"),
+            ("ask_border_option", "Border Option"),
+            ("ask_neon_color", "Neon Color"),
+            ("ask_flash_and_adapter", "Flash & Adapter"),
         ]
 
-        order = {}
+        order_data = {}  # Dictionary to store collected information
+        step_index = 0  # Start at the first step
 
-        # Start at the first step
-        step_index = 0
+        # Keyboard with a "Back" button
+        main_keyboard = telegram.ReplyKeyboardMarkup(
+            [["⬅️ بازگشت"]], resize_keyboard=True, one_time_keyboard=False
+        )
 
-        main_keyboard = telegram.ReplyKeyboardMarkup([["⬅️ بازگشت"]], resize_keyboard=True, one_time_keyboard=False)
+        try:
+            while step_index < len(steps):
+                func_name, label = steps[step_index]
+                func = getattr(self, func_name, None)
 
-        while step_index < len(steps):
-            func_name, label, error_msg = steps[step_index]
-            
-            if func_name == "ask_user_info":
-                user_info = self.ask_user_info()  # Assume this method is defined
-                if user_info is None:
-                    return None  # User canceled or invalid input, go back
-                order['user_info'] = user_info
-                step_index += 1
-            
-            elif func_name == "ask_board_details":
-                board_details = self.ask_board_details()  # Assume this method is defined
-                if board_details is None:
-                    return None  # User canceled or invalid input, go back
-                order['board_details'] = board_details
-                step_index += 1
-            
-            elif func_name == "ask_background_color":
-                background_color = self.ask_background_color()  # Assume this method is defined
-                if background_color is None:
-                    return None  # User canceled or invalid input, go back
-                order['background_color'] = background_color
-                step_index += 1
-            
-            elif func_name == "ask_neon_color":
-                neon_colors = self.ask_neon_color()  # Assume this method is defined
-                if neon_colors is None:
-                    return None  # User canceled or invalid input, go back
-                order['neon_colors'] = neon_colors
-                step_index += 1
-            
-            elif func_name == "ask_hanger_option":
-                hanger_option = self.ask_hanger_option()  # Assume this method is defined
-                if hanger_option is None:
-                    return None  # User canceled or invalid input, go back
-                order['hanger'] = hanger_option
-                step_index += 1
-            
-            elif func_name == "ask_border_option":
-                border_option = self.ask_border_option()  # Assume this method is defined
-                if border_option is None:
-                    return None  # User canceled or invalid input, go back
-                order['border'] = border_option
-                step_index += 1
-            
-            elif func_name == "ask_flash_and_adapter":
-                flash_and_adapter = self.ask_flash_and_adapter()  # Assume this method is defined
-                if flash_and_adapter is None:
-                    return None  # User canceled or invalid input, go back
-                order['flash_and_adapter'] = flash_and_adapter
-                step_index += 1
-            
-            elif func_name == "ask_delivery_options":
-                delivery_options = self.ask_delivery_options()  # Assume this method is defined
-                if delivery_options is None:
-                    return None  # User canceled or invalid input, go back
-                order['delivery'] = delivery_options
-                step_index += 1
+                if callable(func):
+                    # Call the ask function and capture the response
+                    response = func()
 
-            # Handle the back button
-            if step_index > 0 and self.__wait_for_specific_message(main_keyboard):
-                if self.__wait_for_specific_message(main_keyboard) == "⬅️ بازگشت":
-                    step_index -= 1
-                    continue
+                    if response == "⬅️ بازگشت":
+                        # Handle back button
+                        if step_index > 0:
+                            step_index -= 1
+                        else:
+                            self.bot.send_message(
+                                self.chat.id, "❌ نمی‌توانید به مرحله قبل برگردید."
+                            )
+                    elif response == "cancelled":
+                        # Handle cancel action
+                        self.bot.send_message(
+                            self.chat.id, "❌ عملیات لغو شد.", reply_markup=telegram.ReplyKeyboardRemove()
+                        )
+                        return None
+                    elif response is not None:
+                        # Save the response and move to the next step
+                        order_data[label] = response
+                        step_index += 1
+                    else:
+                        # Handle invalid input or retry
+                        self.bot.send_message(self.chat.id, "❌ ورودی نامعتبر است. لطفاً دوباره تلاش کنید.")
+                else:
+                    # If the function is not defined, log and exit
+                    self.bot.send_message(self.chat.id, f"⚠️ خطا: تابع {func_name} تعریف نشده است.")
+                    break
 
-        return order
+            # Finalize and return the collected data
+            self.bot.send_message(self.chat.id, "✅ تمام اطلاعات با موفقیت ثبت شد.", reply_markup=telegram.ReplyKeyboardRemove())
+            return order_data
+
+        except Exception as e:
+            # Log and notify the user about any unexpected errors
+            self.log_error(e, context="__collect_info")
+            self.bot.send_message(self.chat.id, "⚠️ خطایی در ثبت اطلاعات رخ داد.")
+            return None
+
+
 
     def __order_menu(self):
         """User menu to order products from the shop."""

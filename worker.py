@@ -873,13 +873,19 @@ class Worker(threading.Thread):
 
         try:
             while step_index < len(steps):
-                func_name, label = steps[step_index]
+                step = steps[step_index]
+                func_name = step["func"]
+                label = step["label"]
+
+                # Retrieve the function object
                 func = getattr(self, func_name, None)
 
-                if not callable(f'self.{func}'):
+                # Check if the function is callable
+                if not callable(func):
                     self.bot.send_message(
                         self.chat.id, f"⚠️ خطا: تابع {func_name} تعریف نشده است."
                     )
+                    self.log_error(f"Function {func_name} is not callable.", context="__collect_info")
                     return None
 
                 # Call the ask function and capture the response

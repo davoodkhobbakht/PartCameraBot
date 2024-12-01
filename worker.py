@@ -1210,7 +1210,7 @@ class Worker(threading.Thread):
         step_index = 0  # Start from the first step
         main_keyboard = telegram.ReplyKeyboardMarkup([["⬅️ بازگشت"]], resize_keyboard=True, one_time_keyboard=False)
 
-        while 0 <= step_index < len(steps):  # Allow free navigation between steps
+        while step_index < len(steps):  # Ensure step_index is valid
             prompt, key, regex, error_message = steps[step_index]
 
             self.bot.send_message(self.chat.id, prompt, reply_markup=main_keyboard)
@@ -1219,7 +1219,7 @@ class Worker(threading.Thread):
             if isinstance(response, CancelSignal):
                 return "cancelled"  # Exit the process if the user cancels
             elif response == "⬅️ بازگشت":
-                step_index -= 1  # Move back to the previous step
+                step_index = max(0, step_index - 1)  # Prevent step_index from going below 0
             elif re.match(regex, response):
                 user_info[key] = response  # Save the valid input
                 step_index += 1  # Move forward to the next step
@@ -1232,6 +1232,7 @@ class Worker(threading.Thread):
             reply_markup=telegram.ReplyKeyboardRemove(),
         )
         return user_info
+
 
 
     def ask_board_details(self):

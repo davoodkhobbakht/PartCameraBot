@@ -859,13 +859,13 @@ class Worker(threading.Thread):
         Ensures proper navigation between steps.
         """
         steps = [
-            {"func": "ask_user_info", "label": "Personal Info"},
-            {"func": "ask_board_details", "label": "Board Details"},
-            {"func": "ask_background_color", "label": "Background Color"},
-            {"func": "ask_hanger_option", "label": "Hanger Option"},
-            {"func": "ask_border_option", "label": "Border Option"},
-            {"func": "ask_neon_color", "label": "Neon Color"},
-            {"func": "ask_flash_and_adapter", "label": "Flash & Adapter"},
+            {"func": "__ask_user_info", "label": "Personal Info"},
+            {"func": "__ask_board_details", "label": "Board Details"},
+            {"func": "__ask_background_color", "label": "Background Color"},
+            {"func": "__ask_hanger_option", "label": "Hanger Option"},
+            {"func": "__ask_border_option", "label": "Border Option"},
+            {"func": "__ask_neon_color", "label": "Neon Color"},
+            {"func": "__ask_flash_and_adapter", "label": "Flash & Adapter"},
         ]
 
         order_data = {}  # Dictionary to store collected information

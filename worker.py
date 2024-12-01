@@ -876,7 +876,7 @@ class Worker(threading.Thread):
                 func_name, label = steps[step_index]
                 func = getattr(self, func_name, None)
 
-                if not callable(func):
+                if not callable(f'self.{func}'):
                     self.bot.send_message(
                         self.chat.id, f"⚠️ خطا: تابع {func_name} تعریف نشده است."
                     )

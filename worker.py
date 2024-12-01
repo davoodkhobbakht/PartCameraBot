@@ -856,7 +856,7 @@ class Worker(threading.Thread):
     def __collect_info(self):
         """
         Collect all necessary information from the user with back button handling.
-        Allows navigation between steps of the flow.
+        Ensures proper navigation between steps.
         """
         steps = [
             ("ask_user_info", "Personal Info"),
@@ -871,48 +871,57 @@ class Worker(threading.Thread):
         order_data = {}  # Dictionary to store collected information
         step_index = 0  # Start at the first step
 
-        # Keyboard with a "Back" button
-        main_keyboard = telegram.ReplyKeyboardMarkup(
-            [["⬅️ بازگشت"]], resize_keyboard=True, one_time_keyboard=False
-        )
-
         try:
             while step_index < len(steps):
                 func_name, label = steps[step_index]
                 func = getattr(self, func_name, None)
 
-                if callable(func):
-                    # Call the ask function and capture the response
-                    response = func()
+                if not callable(func):
+                    self.bot.send_message(
+                        self.chat.id, f"⚠️ خطا: تابع {func_name} تعریف نشده است."
+                    )
+                    return None
 
-                    if response == "⬅️ بازگشت":
-                        # Handle back button
-                        if step_index > 0:
-                            step_index -= 1
-                        else:
-                            self.bot.send_message(
-                                self.chat.id, "❌ نمی‌توانید به مرحله قبل برگردید."
-                            )
-                    elif response == "cancelled":
-                        # Handle cancel action
-                        self.bot.send_message(
-                            self.chat.id, "❌ عملیات لغو شد.", reply_markup=telegram.ReplyKeyboardRemove()
-                        )
-                        return None
-                    elif response is not None:
-                        # Save the response and move to the next step
-                        order_data[label] = response
-                        step_index += 1
+                # Call the ask function and capture the response
+                try:
+                    response = func()
+                except Exception as e:
+                    self.log_error(e, context=f"Error in {func_name}")
+                    self.bot.send_message(self.chat.id, "⚠️ خطایی رخ داد. لطفاً دوباره تلاش کنید.")
+                    continue
+
+                if response == "⬅️ بازگشت":
+                    # Handle back button
+                    if step_index > 0:
+                        step_index -= 1
                     else:
-                        # Handle invalid input or retry
-                        self.bot.send_message(self.chat.id, "❌ ورودی نامعتبر است. لطفاً دوباره تلاش کنید.")
+                        self.bot.send_message(
+                            self.chat.id, "❌ نمی‌توانید به مرحله قبل برگردید."
+                        )
+                elif response == "cancelled":
+                    # Handle cancel action
+                    self.bot.send_message(
+                        self.chat.id,
+                        "❌ عملیات لغو شد.",
+                        reply_markup=telegram.ReplyKeyboardRemove(),
+                    )
+                    return None
+                elif response is not None:
+                    # Save the response and move to the next step
+                    order_data[label] = response
+                    step_index += 1
                 else:
-                    # If the function is not defined, log and exit
-                    self.bot.send_message(self.chat.id, f"⚠️ خطا: تابع {func_name} تعریف نشده است.")
-                    break
+                    # Handle invalid input or retry
+                    self.bot.send_message(
+                        self.chat.id, "❌ ورودی نامعتبر است. لطفاً دوباره تلاش کنید."
+                    )
 
             # Finalize and return the collected data
-            self.bot.send_message(self.chat.id, "✅ تمام اطلاعات با موفقیت ثبت شد.", reply_markup=telegram.ReplyKeyboardRemove())
+            self.bot.send_message(
+                self.chat.id,
+                "✅ تمام اطلاعات با موفقیت ثبت شد.",
+                reply_markup=telegram.ReplyKeyboardRemove(),
+            )
             return order_data
 
         except Exception as e:

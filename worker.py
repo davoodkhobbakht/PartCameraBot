@@ -1168,7 +1168,7 @@ class Worker(threading.Thread):
 
 
     def ask_user_info(self):
-        """Ask the user for personal information with a back button at each step."""
+        """Ask the user for personal information with a main keyboard back button."""
         user_info = {"name": None, "national_id": None, "phone": None}
         steps = [
             ("👤 لطفاً نام خود را وارد کنید (حروف فارسی یا انگلیسی):", "name", r"^[\u0600-\u06FF\sA-Za-z]+$", "❌ نام نامعتبر است."),
@@ -1177,28 +1177,32 @@ class Worker(threading.Thread):
         ]
         step_index = 0
 
+        # Create the main keyboard with "بازگشت" button
+        main_keyboard = telegram.ReplyKeyboardMarkup([["⬅️ بازگشت"]], resize_keyboard=True, one_time_keyboard=False)
+
         while step_index < len(steps):
             prompt, key, regex, error_message = steps[step_index]
-            
-            # Prepare back button only if not the first step
-            back_button = telegram.InlineKeyboardMarkup([
-                [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="go_back")]
-            ]) if step_index > 0 else None
 
-            self.bot.send_message(self.chat.id, prompt, reply_markup=back_button)
-            response = self.__wait_for_regex(regex, cancellable=True)
+            # Send the message with the main keyboard
+            self.bot.send_message(self.chat.id, prompt, reply_markup=main_keyboard)
+            response = self.__wait_for_regex(rf"({regex}|⬅️ بازگشت)", cancellable=True)
 
             if isinstance(response, CancelSignal):
-                self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.")
+                self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.", reply_markup=telegram.ReplyKeyboardRemove())
                 return None
-            elif response == "go_back":
-                step_index -= 1  # Go back to the previous step
-            elif response:
+            elif response == "⬅️ بازگشت":
+                if step_index > 0:
+                    step_index -= 1
+                else:
+                    self.bot.send_message(self.chat.id, "❌ نمی‌توانید به مرحله قبل برگردید.")
+            elif re.match(regex, response):
                 user_info[key] = response
-                step_index += 1  # Proceed to the next step
+                step_index += 1
             else:
                 self.bot.send_message(self.chat.id, error_message)
 
+        # Remove the keyboard at the end
+        self.bot.send_message(self.chat.id, "✅ اطلاعات ثبت شد.", reply_markup=telegram.ReplyKeyboardRemove())
         return user_info
 
     def ask_board_details(self):

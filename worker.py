@@ -933,8 +933,8 @@ class Worker(threading.Thread):
                 step_index += 1
 
             # Handle the back button
-            if step_index > 0 and self.__wait_for_message(main_keyboard):
-                if self.__wait_for_message(main_keyboard) == "⬅️ بازگشت":
+            if step_index > 0 and self.__wait_for_specific_message(main_keyboard):
+                if self.__wait_for_specific_message(main_keyboard) == "⬅️ بازگشت":
                     step_index -= 1
                     continue
 

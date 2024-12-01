@@ -853,59 +853,92 @@ class Worker(threading.Thread):
         return order_type_callback.data
     
 
-
     def __collect_info(self):
-        # Personal Info
-        user_info = self.ask_user_info()
+        """Collect all necessary information from the user with back button handling."""
+        steps = [
+            ("ask_user_info", "Personal Info", None),
+            ("ask_board_details", "Board Details", None),
+            ("ask_background_color", "Background Color", None),
+            ("ask_neon_color", "Neon Colors", None),
+            ("ask_hanger_option", "Hanger Option", None),
+            ("ask_border_option", "Border Option", None),
+            ("ask_flash_and_adapter", "Flash and Adapter", None),
+            ("ask_delivery_options", "Delivery Options", None),
+        ]
 
-        # Board Details
-        board_details = self.ask_board_details()
+        order = {}
 
-        # Background Color
-        background_color = self.ask_background_color()
+        # Start at the first step
+        step_index = 0
 
-        # Neon Color
-        neon_colors = self.ask_neon_color()
+        main_keyboard = telegram.ReplyKeyboardMarkup([["⬅️ بازگشت"]], resize_keyboard=True, one_time_keyboard=False)
 
-        # Hanger Option
-        hanger_option = self.ask_hanger_option()
+        while step_index < len(steps):
+            func_name, label, error_msg = steps[step_index]
+            
+            if func_name == "ask_user_info":
+                user_info = self.ask_user_info()  # Assume this method is defined
+                if user_info is None:
+                    return None  # User canceled or invalid input, go back
+                order['user_info'] = user_info
+                step_index += 1
+            
+            elif func_name == "ask_board_details":
+                board_details = self.ask_board_details()  # Assume this method is defined
+                if board_details is None:
+                    return None  # User canceled or invalid input, go back
+                order['board_details'] = board_details
+                step_index += 1
+            
+            elif func_name == "ask_background_color":
+                background_color = self.ask_background_color()  # Assume this method is defined
+                if background_color is None:
+                    return None  # User canceled or invalid input, go back
+                order['background_color'] = background_color
+                step_index += 1
+            
+            elif func_name == "ask_neon_color":
+                neon_colors = self.ask_neon_color()  # Assume this method is defined
+                if neon_colors is None:
+                    return None  # User canceled or invalid input, go back
+                order['neon_colors'] = neon_colors
+                step_index += 1
+            
+            elif func_name == "ask_hanger_option":
+                hanger_option = self.ask_hanger_option()  # Assume this method is defined
+                if hanger_option is None:
+                    return None  # User canceled or invalid input, go back
+                order['hanger'] = hanger_option
+                step_index += 1
+            
+            elif func_name == "ask_border_option":
+                border_option = self.ask_border_option()  # Assume this method is defined
+                if border_option is None:
+                    return None  # User canceled or invalid input, go back
+                order['border'] = border_option
+                step_index += 1
+            
+            elif func_name == "ask_flash_and_adapter":
+                flash_and_adapter = self.ask_flash_and_adapter()  # Assume this method is defined
+                if flash_and_adapter is None:
+                    return None  # User canceled or invalid input, go back
+                order['flash_and_adapter'] = flash_and_adapter
+                step_index += 1
+            
+            elif func_name == "ask_delivery_options":
+                delivery_options = self.ask_delivery_options()  # Assume this method is defined
+                if delivery_options is None:
+                    return None  # User canceled or invalid input, go back
+                order['delivery'] = delivery_options
+                step_index += 1
 
-        # Border Option
-        border_option = self.ask_border_option()
+            # Handle the back button
+            if step_index > 0 and self.__wait_for_message(main_keyboard):
+                if self.__wait_for_message(main_keyboard) == "⬅️ بازگشت":
+                    step_index -= 1
+                    continue
 
-        # Flash and Adapter Options
-        flash_and_adapter = self.ask_flash_and_adapter()
-
-        # Delivery Options
-        delivery_options = self.ask_delivery_options()
-
-        # Combine all information
-        # Combine all information
-        order = {
-            "user_info": {
-                "name": user_info["name"],
-                "national_id": user_info["national_id"],  # Assuming ID was used for this field
-                "phone": user_info["phone"],
-            },
-            "board_details": {
-                "shape": board_details["shape"],
-                "dimensions": f"{board_details['length']}x{board_details['width']} سانتی‌متر",
-            },
-            "background_color": background_color,  # Single color
-            "neon_colors": neon_colors,  # Dictionary of up to 3 colors with HEX codes
-            "hanger": hanger_option,  # Boolean or descriptive text
-            "border": border_option,  # Boolean or descriptive text
-            "flash_and_adapter": {
-                "flasher": flash_and_adapter["flasher"],
-                "adapter": flash_and_adapter["adapter"],
-            },
-            "delivery": {
-                "method": delivery_options["delivery_method"],
-                "address": delivery_options["delivery_address"],
-            },
-        }
         return order
-
 
     def __order_menu(self):
         """User menu to order products from the shop."""

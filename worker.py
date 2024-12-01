@@ -1168,66 +1168,87 @@ class Worker(threading.Thread):
 
 
     def ask_user_info(self):
-        """Ask the user for personal information with error handling."""
-        
-        # Function to handle input validation
-        def validate_input(prompt, regex, error_message):
-            while True:
-                self.bot.send_message(self.chat.id, prompt)
-                response = self.__wait_for_regex(regex, cancellable=True)
+        """Ask the user for personal information with a back button at each step."""
+        user_info = {"name": None, "national_id": None, "phone": None}
+        steps = [
+            ("👤 لطفاً نام خود را وارد کنید (حروف فارسی یا انگلیسی):", "name", r"^[\u0600-\u06FF\sA-Za-z]+$", "❌ نام نامعتبر است."),
+            ("📅 کد ملی خود را وارد کنید (۱۰ رقم):", "national_id", r"^\d{10}$", "❌ کد ملی نامعتبر است."),
+            ("📞 شماره تماس خود را وارد کنید (فرمت +98 یا 09):", "phone", r"^(?:\+98|0)?9[\d\u06F0-\u06F9]{9}$", "❌ شماره تماس نامعتبر است."),
+        ]
+        step_index = 0
+
+        while step_index < len(steps):
+            prompt, key, regex, error_message = steps[step_index]
+            
+            # Prepare back button only if not the first step
+            back_button = telegram.InlineKeyboardMarkup([
+                [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="go_back")]
+            ]) if step_index > 0 else None
+
+            self.bot.send_message(self.chat.id, prompt, reply_markup=back_button)
+            response = self.__wait_for_regex(regex, cancellable=True)
+
+            if isinstance(response, CancelSignal):
+                self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.")
+                return None
+            elif response == "go_back":
+                step_index -= 1  # Go back to the previous step
+            elif response:
+                user_info[key] = response
+                step_index += 1  # Proceed to the next step
+            else:
+                self.bot.send_message(self.chat.id, error_message)
+
+        return user_info
+
+    def ask_board_details(self):
+        """Ask the user for board details with a back button."""
+        board_details = {"shape": None, "length": None, "width": None}
+        steps = [
+            ("📐 شکل تابلو مورد نظر خود را انتخاب کنید:", "shape", "inline_keyboard", None),
+            ("📏 طول تابلو را وارد کنید (به سانتی‌متر):", "length", r"^\d+$", "❌ طول نامعتبر است."),
+            ("📏 عرض تابلو را وارد کنید (به سانتی‌متر):", "width", r"^\d+$", "❌ عرض نامعتبر است."),
+        ]
+        step_index = 0
+
+        while step_index < len(steps):
+            prompt, key, input_type, error_message = steps[step_index]
+
+            if input_type == "inline_keyboard" and key == "shape":
+                keyboard = telegram.InlineKeyboardMarkup([
+                    [telegram.InlineKeyboardButton("🔵 دایره", callback_data="circle")],
+                    [telegram.InlineKeyboardButton("🔶 لوزی", callback_data="diamond")],
+                    [telegram.InlineKeyboardButton("⬛ مربع", callback_data="square")],
+                    [telegram.InlineKeyboardButton("🔲 مستطیل", callback_data="rectangle")]
+                ])
+                self.bot.send_message(self.chat.id, prompt, reply_markup=keyboard)
+                response = self.__wait_for_inlinekeyboard_callback()
+                if response.data == "go_back":
+                    step_index -= 1
+                else:
+                    board_details[key] = response.data
+                    step_index += 1
+            else:
+                # Prepare back button
+                back_button = telegram.InlineKeyboardMarkup([
+                    [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="go_back")]
+                ]) if step_index > 0 else None
+
+                self.bot.send_message(self.chat.id, prompt, reply_markup=back_button)
+                response = self.__wait_for_regex(input_type, cancellable=True)
+
                 if isinstance(response, CancelSignal):
                     self.bot.send_message(self.chat.id, "❌ عملیات لغو شد.")
                     return None
-                if response:
-                    return response
-                self.bot.send_message(self.chat.id, error_message)
+                elif response == "go_back":
+                    step_index -= 1
+                elif response:
+                    board_details[key] = response
+                    step_index += 1
+                else:
+                    self.bot.send_message(self.chat.id, error_message)
 
-        # Ask for user's name
-        name_prompt = "👤 لطفاً نام خود را وارد کنید (حروف فارسی یا انگلیسی):"
-        name_regex = r"^[\u0600-\u06FF\sA-Za-z]+$"  # Matches Persian and English letters and spaces
-        name_error = "❌ نام نامعتبر است. لطفاً تنها از حروف فارسی یا انگلیسی استفاده کنید."
-        name = validate_input(name_prompt, name_regex, name_error)
-        if name is None:
-            return None
-
-        # Ask for national ID (Birth date field repurposed for ID)
-        id_prompt = "📅 کد ملی خود را وارد کنید (۱۰ رقم):"
-        id_regex = r"^\d{10}$"  # Matches exactly 10 digits
-        id_error = "❌ کد ملی نامعتبر است. لطفاً ۱۰ رقم وارد کنید."
-        national_id = validate_input(id_prompt, id_regex, id_error)
-        if national_id is None:
-            return None
-
-        # Ask for contact information
-        phone_prompt = "📞 شماره تماس خود را وارد کنید (فرمت +98 یا 09):"
-        phone_regex =r"^(?:\+98|0)?9[\d\u06F0-\u06F9]{9}$" # Matches +98 or 09 followed by 9 digits
-        phone_error = "❌ شماره تماس نامعتبر است. لطفاً شماره‌ای معتبر وارد کنید."
-        phone = validate_input(phone_prompt, phone_regex, phone_error)
-        if phone is None:
-            return None
-
-        return {"name": name, "national_id": national_id, "phone": phone}
-
-
-    def ask_board_details(self):
-        # Inline keyboard for shape selection
-        shape_keyboard = telegram.InlineKeyboardMarkup([
-            [telegram.InlineKeyboardButton("🔵 دایره", callback_data="circle")],
-            [telegram.InlineKeyboardButton("🔶 لوزی", callback_data="diamond")],
-            [telegram.InlineKeyboardButton("⬛ مربع", callback_data="square")],
-            [telegram.InlineKeyboardButton("🔲 مستطیل", callback_data="rectangle")]
-        ])
-        self.bot.send_message(self.chat.id, "📐 شکل تابلو مورد نظر خود را انتخاب کنید:", reply_markup=shape_keyboard)
-        shape_callback = self.__wait_for_inlinekeyboard_callback()
-        shape = shape_callback.data
-
-        # Ask for dimensions
-        self.bot.send_message(self.chat.id, "📏 طول تابلو را وارد کنید (به سانتی‌متر):")
-        length = self.__wait_for_regex(r"\d+", cancellable=True)
-        self.bot.send_message(self.chat.id, "دقت کنید که نسبت طول عرض متناسب با طرح خود انتخاب کنید . 📏 عرض تابلو را وارد کنید (به سانتی‌متر):")
-        width = self.__wait_for_regex(r"\d+", cancellable=True)
-
-        return {"shape": shape, "length": length, "width": width}
+        return board_details
 
     def ask_color_details(self):
         # Inline keyboard for shape selection
@@ -1331,8 +1352,7 @@ class Worker(threading.Thread):
         return "بله" if border_callback.data == "border_yes" else "خیر"
     
     def ask_neon_color(self):
-        """Allow the user to select up to 3 neon colors using inline keyboards."""
-        # Define neon colors with hex codes
+        """Allow the user to select up to 3 neon colors with back button support."""
         neon_colors = {
             "neon_red": ("🔴 قرمز", "#FF073A"),
             "neon_blue": ("🔵 آبی", "#1B03A3"),
@@ -1343,67 +1363,53 @@ class Worker(threading.Thread):
             "neon_pink": ("🌸 صورتی", "#FF1493"),
             "neon_white": ("⚪ سفید", "#FFFFFF"),
         }
-
-        # Track selected colors
         selected_colors = set()
-
-        # Initial message placeholder
         msg = None
 
         while True:
-            # Create the inline keyboard dynamically based on selection
             buttons = []
             for key, (label, _) in neon_colors.items():
                 if key in selected_colors:
-                    # Add ✅ to selected options
                     buttons.append(telegram.InlineKeyboardButton(f"✅ {label}", callback_data=key))
                 else:
                     buttons.append(telegram.InlineKeyboardButton(label, callback_data=key))
 
-            # Divide buttons into rows of 2
             keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
             keyboard.append([telegram.InlineKeyboardButton("✔️ تایید انتخاب", callback_data="confirm_selection")])
+            if len(selected_colors) > 0:
+                keyboard.append([telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="go_back")])
 
-            # Send or edit the message with the updated keyboard
             if not msg:
                 msg = self.bot.send_message(
                     self.chat.id,
-                    "💡 لطفاً تا ۳ رنگ نئون انتخاب کنید (روی گزینه‌های انتخاب‌شده کلیک کنید تا از انتخاب خارج شوند):",
+                    "💡 لطفاً تا ۳ رنگ نئون انتخاب کنید:",
                     reply_markup=telegram.InlineKeyboardMarkup(keyboard)
                 )
             else:
-                # Only edit if the reply markup has changed
                 self.bot.edit_message_reply_markup(
                     chat_id=self.chat.id,
                     message_id=msg.message_id,
                     reply_markup=telegram.InlineKeyboardMarkup(keyboard)
                 )
 
-            # Wait for user selection
             callback = self.__wait_for_inlinekeyboard_callback()
 
             if callback.data == "confirm_selection":
                 if 1 <= len(selected_colors) <= 3:
-                    # Limit the selection to 1-3 colors
-                    self.bot.send_message(self.chat.id, "✅ رنگ‌های انتخاب‌شده با موفقیت ثبت شد.")
+                    self.bot.send_message(self.chat.id, "✅ رنگ‌های انتخاب‌شده ثبت شد.")
                     break
                 else:
-                    self.bot.send_message(self.chat.id, "❌ لطفاً بین ۱ تا ۳ رنگ انتخاب کنید.")
-                    continue
-
-            # Toggle selection
-            if callback.data in selected_colors:
+                    self.bot.send_message(self.chat.id, "❌ بین ۱ تا ۳ رنگ انتخاب کنید.")
+            elif callback.data == "go_back":
+                return None  # Indicates the user chose to go back
+            elif callback.data in selected_colors:
                 selected_colors.remove(callback.data)
+            elif len(selected_colors) < 3:
+                selected_colors.add(callback.data)
             else:
-                if len(selected_colors) < 3:
-                    selected_colors.add(callback.data)
-                else:
-                    self.bot.send_message(self.chat.id, "❌ حداکثر ۳ رنگ می‌توانید انتخاب کنید.")
+                self.bot.send_message(self.chat.id, "❌ حداکثر ۳ رنگ می‌توانید انتخاب کنید.")
 
-        # Return the selected colors with their hex codes
         return {key: neon_colors[key] for key in selected_colors}
-
-
 
     def ask_flash_and_adapter(self):
         """Ask the user if they need a flasher and an adapter in two steps."""

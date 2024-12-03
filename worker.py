@@ -1278,7 +1278,7 @@ class Worker(threading.Thread):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":
                     step_index -= 1  # Move back to the previous step
-                elif response.data in options:
+                elif int(response.data) in options:
                     board_details[key] = response
                     step_index += 1  # Move forward to the next step
                 else:

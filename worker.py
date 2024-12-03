@@ -1273,7 +1273,7 @@ class Worker(threading.Thread):
                 self.bot.send_message(self.chat.id, f"{prompt} (پیش‌فرض: {default_value})", reply_markup=keyboard)
 
                 response = self.__wait_for_inlinekeyboard_callback()
-                
+                print(response)
                 if isinstance(response, CancelSignal):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":

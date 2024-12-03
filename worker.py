@@ -1261,7 +1261,7 @@ class Worker(threading.Thread):
             elif input_type == "inline_keyboard" and key in ["width", "length"]:
                 # Dynamically generate dimensions
                 if key == "width":
-                    default_value = int(len(custom_text))   # Example calculation
+                    default_value = int(7)   # Example calculation
                 elif key == "length":
                     default_value = int(len(custom_text)) * 5  # Example calculation
 
@@ -1278,7 +1278,7 @@ class Worker(threading.Thread):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":
                     step_index -= 1  # Move back to the previous step
-                elif response in options:
+                elif response.data in options:
                     board_details[key] = response
                     step_index += 1  # Move forward to the next step
                 else:

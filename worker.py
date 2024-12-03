@@ -1278,7 +1278,7 @@ class Worker(threading.Thread):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":
                     step_index -= 1  # Move back to the previous step
-                elif int(response.data) in options:
+                elif response.data in [str(opt) for opt in options]:
                     board_details[key] = response
                     step_index += 1  # Move forward to the next step
                 else:
@@ -1290,6 +1290,7 @@ class Worker(threading.Thread):
             "✅ جزئیات تابلو با موفقیت ثبت شد.",
             reply_markup=telegram.ReplyKeyboardRemove(),
         )
+        print(board_details)
         return board_details
 
     

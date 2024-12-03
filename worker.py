@@ -690,7 +690,7 @@ class Worker(threading.Thread):
         font_choice = font_callback.data
 
         # Step 3: Collect additional order details (from __collect_info)
-        order_info = self.__collect_info()
+        order_info = self.__collect_info(custom_text)
 
         # Step 4: Generate and send PDF (or image if needed)
         self.bot.send_message(self.chat.id, "📄 در حال ساخت پیش نمایش سفارش شما...")
@@ -845,14 +845,14 @@ class Worker(threading.Thread):
         return order_type_callback.data
     
 
-    def __collect_info(self):
+    def __collect_info(self,custom_text):
         """
         Collect all necessary information from the user with back button handling.
         Ensures proper navigation between steps.
         """
         steps = [
             {"func": "ask_user_info", "label": "Personal Info"},
-            {"func": "ask_board_details", "label": "Board Details"},
+            {"func": "ask_board_details", "label": "board_details"},
             {"func": "ask_background_color", "label": "background_color"},
             {"func": "ask_hanger_option", "label": "Hanger Option"},
             {"func": "ask_neon_color", "label": "neon_colors"},
@@ -882,7 +882,10 @@ class Worker(threading.Thread):
 
                 # Call the ask function and capture the response
                 try:
-                    response = func()
+                    if label == 'board_details' :
+                        response = func(custom_text)
+                    else:
+                        response = func()
                 except Exception as e:
                     self.log_error(e, context=f"Error in {func_name}")
                     self.bot.send_message(self.chat.id, "⚠️ خطایی رخ داد. لطفاً دوباره تلاش کنید.")

@@ -1465,19 +1465,19 @@ class Worker(threading.Thread):
         return {key: neon_colors[key] for key in selected_colors}
 
 
-def __generate_color_keyboard(self, neon_colors, selected_colors):
-    """Generate the inline keyboard with selectable neon colors."""
-    buttons = []
-    for key, (label, _) in neon_colors.items():
-        if key in selected_colors:
-            buttons.append(telegram.InlineKeyboardButton(f"✅ {label}", callback_data=key))
-        else:
-            buttons.append(telegram.InlineKeyboardButton(label, callback_data=key))
+    def __generate_color_keyboard(self, neon_colors, selected_colors):
+        """Generate the inline keyboard with selectable neon colors."""
+        buttons = []
+        for key, (label, _) in neon_colors.items():
+            if key in selected_colors:
+                buttons.append(telegram.InlineKeyboardButton(f"✅ {label}", callback_data=key))
+            else:
+                buttons.append(telegram.InlineKeyboardButton(label, callback_data=key))
 
-    keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-    keyboard.append([telegram.InlineKeyboardButton("✔️ تایید انتخاب", callback_data="confirm_selection")])
-    keyboard.append([telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")])
-    return telegram.InlineKeyboardMarkup(keyboard)
+        keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
+        keyboard.append([telegram.InlineKeyboardButton("✔️ تایید انتخاب", callback_data="confirm_selection")])
+        keyboard.append([telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")])
+        return telegram.InlineKeyboardMarkup(keyboard)
 
 
     def ask_flash_and_adapter(self):

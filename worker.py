@@ -1279,7 +1279,7 @@ class Worker(threading.Thread):
                 elif response == "⬅️ بازگشت":
                     step_index -= 1  # Move back to the previous step
                 elif response.data in [str(opt) for opt in options]:
-                    board_details[key] = int(str(response.data))
+                    board_details[key] = int(float(response.data))
                     step_index += 1  # Move forward to the next step
                 else:
                     self.bot.send_message(self.chat.id, error_message)

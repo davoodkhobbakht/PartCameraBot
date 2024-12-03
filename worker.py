@@ -1540,8 +1540,7 @@ class Worker(threading.Thread):
             ])
         # Notify them of the new placed order
         for admin in admins:
-            payment_image = open(order.payment_image.file_path , 'r')
-            self.bot.send_photo(admin.user_id, payment_image, caption=self.loc.get('notification_order_placed',
+            self.bot.send_photo(admin.user_id, order.payment_image, caption=self.loc.get('notification_order_placed',
                                                order=order.text(w=self)))
 
     def __order_status(self):
@@ -1826,7 +1825,7 @@ class Worker(threading.Thread):
             
             
             self.bot.send_photo(self.chat.id, order.payment_image, caption=self.loc.get('notification_order_placed',
-                                               order=order.text(w=self)))
+                                               order=order.text(w=self)),reply_markup=order_keyboard)
         # Set the Live mode flag to True
         self.admin.live_mode = True
         # Commit the change to the database

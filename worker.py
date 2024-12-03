@@ -1219,14 +1219,14 @@ class Worker(threading.Thread):
 
 
 
-    def ask_board_details(self):
+    def ask_board_details(self,custom_text):
         """Ask the user for board details with unrestricted back navigation."""
         board_details = {"shape": None, "length": None, "width": None}
         steps = [
             ("📐 شکل تابلو مورد نظر خود را انتخاب کنید:", "shape", "inline_keyboard", None),
-            ("📏 طول تابلو را وارد کنید (به سانتی‌متر):", "length", r"^\d+$", "❌ طول نامعتبر است."),
-            ("📏 عرض تابلو را وارد کنید (به سانتی‌متر):", "width", r"^\d+$", "❌ عرض نامعتبر است."),
-        ]
+        ("📏 طول تابلو را وارد کنید (به سانتی‌متر):", "length", "inline_keyboard", None),
+        ("📏 عرض تابلو را انتخاب کنید یا مقدار جدیدی وارد کنید:", "width", "inline_keyboard", None),
+    ]
 
         step_index = 0  # Start from the first step
 
@@ -1254,11 +1254,23 @@ class Worker(threading.Thread):
                     step_index += 1  # Move forward to the next step
                 else:
                     self.bot.send_message(self.chat.id, "❌ گزینه نامعتبر است. لطفاً دوباره تلاش کنید.")
-            else:
-                # Handle text input steps (length and width)
-                self.bot.send_message(self.chat.id, prompt)
-                response = self.__wait_for_regex(rf"({input_type}|⬅️ بازگشت)", cancellable=True)
+            
+            elif input_type == "inline_keyboard" and key in ["width", "length"]:
+                # Dynamically generate dimensions
+                if key == "width":
+                    default_value = int(len(custom_text)) // 2  # Example calculation
+                elif key == "length":
+                    default_value = int(len(custom_text)) // 3  # Example calculation
 
+                options = [default_value, default_value + 10, default_value + 20]
+                keyboard = telegram.InlineKeyboardMarkup([
+                    [telegram.InlineKeyboardButton(f"{opt} سانتی‌متر", callback_data=str(opt)) for opt in options],
+                    [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")]
+                ])
+                self.bot.send_message(self.chat.id, f"{prompt} (پیش‌فرض: {default_value})", reply_markup=keyboard)
+
+                response = self.__wait_for_inlinekeyboard_callback()
+                
                 if isinstance(response, CancelSignal):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":

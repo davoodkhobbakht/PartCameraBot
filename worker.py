@@ -851,12 +851,12 @@ class Worker(threading.Thread):
         Ensures proper navigation between steps.
         """
         steps = [
-            {"func": "ask_user_info", "label": "Personal Info"},
             {"func": "ask_board_details", "label": "board_details"},
             {"func": "ask_background_color", "label": "background_color"},
             {"func": "ask_hanger_option", "label": "Hanger Option"},
             {"func": "ask_neon_color", "label": "neon_colors"},
             {"func": "ask_flash_and_adapter", "label": "Flash & Adapter"},
+            {"func": "ask_user_info", "label": "personal_info"},
         ]
 
         order_data = {}  # Dictionary to store collected information
@@ -1261,11 +1261,11 @@ class Worker(threading.Thread):
             elif input_type == "inline_keyboard" and key in ["width", "length"]:
                 # Dynamically generate dimensions
                 if key == "width":
-                    default_value = int(len(custom_text)) // 2  # Example calculation
+                    default_value = int(len(custom_text))   # Example calculation
                 elif key == "length":
-                    default_value = int(len(custom_text)) // 3  # Example calculation
+                    default_value = int(len(custom_text)) * 5  # Example calculation
 
-                options = [default_value, default_value + 10, default_value + 20]
+                options = [default_value, default_value * 1.5 , default_value * 2]
                 keyboard = telegram.InlineKeyboardMarkup([
                     [telegram.InlineKeyboardButton(f"{opt} سانتی‌متر", callback_data=str(opt)) for opt in options],
                     [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")]
@@ -1278,7 +1278,7 @@ class Worker(threading.Thread):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":
                     step_index -= 1  # Move back to the previous step
-                elif re.match(input_type, response):
+                elif response in options:
                     board_details[key] = response
                     step_index += 1  # Move forward to the next step
                 else:

@@ -337,8 +337,8 @@ class Worker(threading.Thread):
                 f"🪝 جا آویز: {hanger_option}\n"
                 f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
                 f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
-                f"🚚 روش ارسال: {delivery_options['delivery_method']}\n"
-                f"📍 آدرس: {delivery_options['delivery_address']}"
+                f"🚚 روش ارسال: {delivery_options['method']}\n"
+                f"📍 آدرس: {delivery_options['address']}"
             )
             
 
@@ -857,6 +857,7 @@ class Worker(threading.Thread):
             {"func": "ask_neon_color", "label": "neon_colors"},
             {"func": "ask_flash_and_adapter", "label": "flash_and_adapter"},
             {"func": "ask_user_info", "label": "user_info"},
+            {"func": "ask_delivery_options", "label": "delivery"},
         ]
 
         order_data = {}  # Dictionary to store collected information
@@ -1121,8 +1122,8 @@ class Worker(threading.Thread):
                 f"🪝 جا آویز: {hanger_option}\n"
                 f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
                 f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
-                f"🚚 روش ارسال: {delivery_options['delivery_method']}\n"
-                f"📍 آدرس: {delivery_options['delivery_address']}"
+                f"🚚 روش ارسال: {delivery_options['method']}\n"
+                f"📍 آدرس: {delivery_options['address']}"
             )
             
             # Wait for user input
@@ -1297,7 +1298,7 @@ class Worker(threading.Thread):
 
     def ask_delivery_options(self):
         """Ask the user for delivery options including method and address."""
-        delivery_info = {"delivery_method": None, "delivery_address": None}
+        delivery_info = {"method": None, "address": None}
         steps = [
             ("📦 لطفاً روش ارسال را انتخاب کنید:", "delivery_method", "inline_keyboard", None),
             ("📍 لطفاً آدرس ارسال را وارد کنید:", "delivery_address", r".{5,}", "❌ آدرس باید حداقل ۵ کاراکتر باشد."),

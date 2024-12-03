@@ -717,7 +717,7 @@ class Worker(threading.Thread):
             name=f'{custom_text} تابلو متن دلخواه',
             description='',
             price=len(custom_text) * 150000,  # Example price logic based on text length
-            deleted=False
+            deleted=True
             
         )
         
@@ -1540,8 +1540,8 @@ class Worker(threading.Thread):
             ])
         # Notify them of the new placed order
         for admin in admins:
-
-            self.bot.send_photo(admin.user_id, order.payment_image, caption=self.loc.get('notification_order_placed',
+            payment_image = open(order.payment_image.file_path , 'r')
+            self.bot.send_photo(admin.user_id, payment_image, caption=self.loc.get('notification_order_placed',
                                                order=order.text(w=self)))
 
     def __order_status(self):

@@ -1824,8 +1824,8 @@ class Worker(threading.Thread):
             # Send the created message
             #self.bot.send_message(self.chat.id, order.text(w=self),reply_markup=order_keyboard)
             
-            payment_image = open(order.payment_image , 'r')
-            self.bot.send_photo(self.chat.id, payment_image, caption=self.loc.get('notification_order_placed',
+            
+            self.bot.send_photo(self.chat.id, order.payment_image, caption=self.loc.get('notification_order_placed',
                                                order=order.text(w=self)))
         # Set the Live mode flag to True
         self.admin.live_mode = True

@@ -853,7 +853,7 @@ class Worker(threading.Thread):
         steps = [
             {"func": "ask_board_details", "label": "board_details"},
             {"func": "ask_background_color", "label": "background_color"},
-            {"func": "ask_hanger_option", "label": "Hanger Option"},
+            {"func": "ask_hanger_option", "label": "hanger"},
             {"func": "ask_neon_color", "label": "neon_colors"},
             {"func": "ask_flash_and_adapter", "label": "flash_and_adapter"},
             {"func": "ask_user_info", "label": "user_info"},

@@ -855,8 +855,8 @@ class Worker(threading.Thread):
             {"func": "ask_background_color", "label": "background_color"},
             {"func": "ask_hanger_option", "label": "Hanger Option"},
             {"func": "ask_neon_color", "label": "neon_colors"},
-            {"func": "ask_flash_and_adapter", "label": "Flash & Adapter"},
-            {"func": "ask_user_info", "label": "personal_info"},
+            {"func": "ask_flash_and_adapter", "label": "flash_and_adapter"},
+            {"func": "ask_user_info", "label": "user_info"},
         ]
 
         order_data = {}  # Dictionary to store collected information

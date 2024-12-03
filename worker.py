@@ -1249,7 +1249,7 @@ class Worker(threading.Thread):
 
                 if response.data == "back":
                     step_index -= 1  # Move back to the previous step
-                elif response.data in ["circle", "diamond", "square", "rectangle"]:
+                elif response.data in ["circle", "diamond", "square", "rectangle","border"]:
                     board_details[key] = response.data
                     step_index += 1  # Move forward to the next step
                 else:

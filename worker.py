@@ -316,8 +316,6 @@ class Worker(threading.Thread):
             # Background Color
             background_color = self.ask_background_color()
 
-            # Neon Color
-            neon_colors = self.ask_neon_color()
 
             # Hanger Option
             hanger_option = self.ask_hanger_option()
@@ -336,11 +334,6 @@ class Worker(threading.Thread):
                 f"📅 کد ملی: {user_info['national_id']}\n"
                 f"📞 شماره تماس: {user_info['phone']}\n"
                 f"🎨 رنگ پس‌زمینه: { background_color}\n"
-                f"💡 رنگ‌های نئون:\n"
-                + "\n".join(
-                    [f"   - {label} ({hex_code})" for label, hex_code in neon_colors.values()]
-                )
-                + "\n"
                 f"🪝 جا آویز: {hanger_option}\n"
                 f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
                 f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
@@ -705,7 +698,7 @@ class Worker(threading.Thread):
         text_png_path = self.__generate_text_image( custom_text,'danstevis' if font_choice =='danstevis_2' else font_choice ,
                                                    background_color= 'white' if order_info['background_color'] == 'سفید' else 'black',
                                                    neon_colors= order_info['neon_colors'].values(), shape=order_info['board_details']['shape'],
-                                                    single_line = True if font_choice in ['danstevis','iransans'] else False , border = order_info['border'] )
+                                                    single_line = True if font_choice in ['danstevis','iransans'] else False  )
         
         if text_png_path:
             self.bot.send_photo(self.chat.id, open('/home/doitiir/public_html/'+text_png_path, "rb") ,caption = 'طرح نهاییتون میتونه طبق سلیقه شما باشه و این تنها یک پیش نمایش از متن شماست. ')
@@ -751,7 +744,6 @@ class Worker(threading.Thread):
             )
             + "\n"
             f"🪝 جا آویز: {order_info['hanger']}\n"
-            f"🖌️ دورگیری: {order_info['border']}\n"
             f"💡 فلاشر: {order_info['flash_and_adapter']['flasher']}\n"
             f"🔌 آداپتور: {order_info['flash_and_adapter']['adapter']}\n"
             f"🚚 روش ارسال: {order_info['delivery']['method']}\n"
@@ -795,7 +787,7 @@ class Worker(threading.Thread):
     
 
 
-    def __generate_text_image(self, text, font_choice, background_color, neon_colors, shape,border,single_line):
+    def __generate_text_image(self, text, font_choice, background_color, neon_colors, shape,single_line):
         """Send a request to the PHP server to generate the PNG file for the custom text order."""
         
 
@@ -808,7 +800,7 @@ class Worker(threading.Thread):
             "font": font_choice,
             "shadowColors": [neon_color[1] for neon_color in neon_colors],
             "outputPath":  output_path,
-            "shape": "border" if border == 'بله' else shape,
+            "shape": shape,
             "single_line": single_line,
             "background_color":background_color
         }
@@ -861,15 +853,15 @@ class Worker(threading.Thread):
         steps = [
             {"func": "ask_user_info", "label": "Personal Info"},
             {"func": "ask_board_details", "label": "Board Details"},
-            {"func": "ask_background_color", "label": "Background Color"},
+            {"func": "ask_background_color", "label": "background_color"},
             {"func": "ask_hanger_option", "label": "Hanger Option"},
-            {"func": "ask_border_option", "label": "Border Option"},
-            {"func": "ask_neon_color", "label": "Neon Color"},
+            {"func": "ask_neon_color", "label": "neon_colors"},
             {"func": "ask_flash_and_adapter", "label": "Flash & Adapter"},
         ]
 
         order_data = {}  # Dictionary to store collected information
         step_index = 0  # Start at the first step
+        
 
         try:
             while step_index < len(steps):
@@ -1105,10 +1097,7 @@ class Worker(threading.Thread):
 
             # Background Color
             background_color = self.ask_background_color()
-
-            # Neon Color
-            neon_colors = self.ask_neon_color()
-
+            
             # Hanger Option
             hanger_option = self.ask_hanger_option()
 
@@ -1126,11 +1115,6 @@ class Worker(threading.Thread):
                 f"📅 کد ملی: {user_info['national_id']}\n"
                 f"📞 شماره تماس: {user_info['phone']}\n"
                 f"🎨 رنگ پس‌زمینه: { background_color}\n"
-                f"💡 رنگ‌های نئون:\n"
-                + "\n".join(
-                    [f"   - {label} ({hex_code})" for label, hex_code in neon_colors.values()]
-                )
-                + "\n"
                 f"🪝 جا آویز: {hanger_option}\n"
                 f"💡 فلاشر: {flash_and_adapter['flasher']}\n"
                 f"🔌 آداپتور: {flash_and_adapter['adapter']}\n"
@@ -1256,6 +1240,7 @@ class Worker(threading.Thread):
                     [telegram.InlineKeyboardButton("🔶 لوزی", callback_data="diamond")],
                     [telegram.InlineKeyboardButton("⬛ مربع", callback_data="square")],
                     [telegram.InlineKeyboardButton("🔲 مستطیل", callback_data="rectangle")],
+                    [telegram.InlineKeyboardButton("دورگیری شده", callback_data="border")],
                     [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")],
                 ])
                 self.bot.send_message(self.chat.id, prompt, reply_markup=keyboard)
@@ -1398,25 +1383,6 @@ class Worker(threading.Thread):
         self.bot.send_message(self.chat.id, "✅ گزینه جا آویز ثبت شد.", reply_markup=telegram.ReplyKeyboardRemove())
         return hanger_option
 
-
-
-    def ask_border_option(self):
-        """Ask the user if the board should have a border with back and cancel handling."""
-        while True:
-            border_keyboard = telegram.InlineKeyboardMarkup([
-                [
-                    telegram.InlineKeyboardButton("✅ بله", callback_data="border_yes"),
-                    telegram.InlineKeyboardButton("❌ خیر", callback_data="border_no"),
-                ],
-                [telegram.InlineKeyboardButton("⬅️ بازگشت", callback_data="back")],
-            ])
-            self.bot.send_message(self.chat.id, "آیا تابلو دورگیری شود؟", reply_markup=border_keyboard)
-
-            callback = self.__wait_for_inlinekeyboard_callback()
-            if callback.data == "back":
-                return "⬅️ بازگشت"  # Go back
-            border_option = "بله" if callback.data == "border_yes" else "خیر"
-            return border_option
 
     
     def ask_neon_color(self):

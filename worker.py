@@ -736,7 +736,7 @@ class Worker(threading.Thread):
             f"📅 کد ملی: {order_info['user_info']['national_id']}\n"
             f"📞 شماره تماس: {order_info['user_info']['phone']}\n"
             f"📐 شکل تابلو: {order_info['board_details']['shape']}\n"
-            f"📏 ابعاد: {order_info['board_details']['length'] +'X' +order_info['board_details']['width']}\n"
+            f"📏 ابعاد: {str(order_info['board_details']['length']) +'X' +str(order_info['board_details']['width'])}\n"
             f"🎨 رنگ پس‌زمینه: {order_info['background_color']}\n"
             f"💡 رنگ‌های نئون:\n"
             + "\n".join(

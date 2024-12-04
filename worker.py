@@ -1274,7 +1274,7 @@ class Worker(threading.Thread):
                 self.bot.send_message(self.chat.id, f"{prompt} (پیش‌فرض: {default_value})", reply_markup=keyboard)
 
                 response = self.__wait_for_inlinekeyboard_callback()
-                print(response)
+                #print(response)
                 if isinstance(response, CancelSignal):
                     return "cancelled"  # Exit process
                 elif response == "⬅️ بازگشت":
@@ -1291,7 +1291,7 @@ class Worker(threading.Thread):
             "✅ جزئیات تابلو با موفقیت ثبت شد.",
             reply_markup=telegram.ReplyKeyboardRemove(),
         )
-        print(board_details)
+        #print(board_details)
         return board_details
 
     
